@@ -1,15 +1,13 @@
 import WorkspaceSidebar from "../components/Workspace/WorkspaceSidebar";
-import ChannelList from "../components/Workspace/ChannelList";
+import ChannelPanel from "../components/Workspace/ChannelPanel";
+import ChatArea from "../components/Workspace/ChatArea";
 
 function Workspace() {
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-slate-950 text-white">
       <WorkspaceSidebar />
-      <ChannelList />
-
-      <div className="flex-1 p-4">
-        Chat Area
-      </div>
+      <ChannelPanel />
+      <ChatArea />
     </div>
   );
 }
