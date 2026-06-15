@@ -1,0 +1,301 @@
+import type { User, Workspace, Channel, Message } from '../types';
+
+export const currentUser: User = {
+  id: 'user-raj',
+  name: 'Raj Sharma',
+  avatar: 'RS',
+  status: 'online',
+  role: 'Admin',
+};
+
+export const mockUsers: User[] = [
+  {
+    id: 'user-alice',
+    name: 'Alice Johnson',
+    avatar: 'AJ',
+    status: 'online',
+    role: 'Member',
+  },
+  {
+    id: 'user-bob',
+    name: 'Bob Smith',
+    avatar: 'BS',
+    status: 'away',
+    role: 'Member',
+  },
+  {
+    id: 'user-charlie',
+    name: 'Charlie Brown',
+    avatar: 'CB',
+    status: 'offline',
+    role: 'Member',
+  },
+  {
+    id: 'user-diana',
+    name: 'Diana Prince',
+    avatar: 'DP',
+    status: 'online',
+    role: 'Admin',
+  },
+  {
+    id: 'user-evan',
+    name: 'Evan Wright',
+    avatar: 'EW',
+    status: 'online',
+    role: 'Member',
+  },
+];
+
+export const mockWorkspaces: Workspace[] = [
+  {
+    id: 'ws-technova',
+    name: 'TechNova',
+    description: 'Engineering and Product Development collaboration space',
+    logo: 'TN',
+    membersCount: 15,
+  },
+  {
+    id: 'ws-designstudio',
+    name: 'DesignStudio',
+    description: 'UI/UX Design, creative branding and branding guidelines',
+    logo: 'DS',
+    membersCount: 8,
+  },
+  {
+    id: 'ws-marketinghub',
+    name: 'MarketingHub',
+    description: 'Social campaigns, growth hacking, and ad strategies',
+    logo: 'MH',
+    membersCount: 12,
+  },
+];
+
+export const mockChannels: Channel[] = [
+  // TechNova Channels
+  {
+    id: 'ch-tn-general',
+    workspaceId: 'ws-technova',
+    name: 'general',
+    description: 'Company-wide announcements and general chatter',
+    isPrivate: false,
+    type: 'channel',
+  },
+  {
+    id: 'ch-tn-frontend',
+    workspaceId: 'ws-technova',
+    name: 'frontend',
+    description: 'React 19, Tailwind CSS v4, and web client engineering',
+    isPrivate: false,
+    type: 'channel',
+  },
+  {
+    id: 'ch-tn-backend',
+    workspaceId: 'ws-technova',
+    name: 'backend',
+    description: 'Node.js, Express, Socket.io, and Redis architectures',
+    isPrivate: false,
+    type: 'channel',
+  },
+  {
+    id: 'ch-tn-security',
+    workspaceId: 'ws-technova',
+    name: 'sec-ops',
+    description: 'Private security monitoring and vulnerability tracking',
+    isPrivate: true,
+    type: 'channel',
+  },
+  // TechNova DMs (simulated channels)
+  {
+    id: 'dm-tn-alice',
+    workspaceId: 'ws-technova',
+    name: 'Alice Johnson',
+    description: 'Direct Message with Alice Johnson',
+    isPrivate: true,
+    type: 'dm',
+    recipientId: 'user-alice',
+  },
+  {
+    id: 'dm-tn-bob',
+    workspaceId: 'ws-technova',
+    name: 'Bob Smith',
+    description: 'Direct Message with Bob Smith',
+    isPrivate: true,
+    type: 'dm',
+    recipientId: 'user-bob',
+  },
+
+  // DesignStudio Channels
+  {
+    id: 'ch-ds-general',
+    workspaceId: 'ws-designstudio',
+    name: 'general',
+    description: 'Design team general discussions',
+    isPrivate: false,
+    type: 'channel',
+  },
+  {
+    id: 'ch-ds-figma',
+    workspaceId: 'ws-designstudio',
+    name: 'figma-library',
+    description: 'Figma components, design system library, and assets updates',
+    isPrivate: false,
+    type: 'channel',
+  },
+  {
+    id: 'ch-ds-feedback',
+    workspaceId: 'ws-designstudio',
+    name: 'feedback-loop',
+    description: 'Constructive critiques on ongoing client layouts',
+    isPrivate: false,
+    type: 'channel',
+  },
+
+  // MarketingHub Channels
+  {
+    id: 'ch-mh-general',
+    workspaceId: 'ws-marketinghub',
+    name: 'general',
+    description: 'Marketing general chatter',
+    isPrivate: false,
+    type: 'channel',
+  },
+  {
+    id: 'ch-mh-seo',
+    workspaceId: 'ws-marketinghub',
+    name: 'seo-growth',
+    description: 'Organic search optimizations and search console monitoring',
+    isPrivate: false,
+    type: 'channel',
+  },
+];
+
+export const mockMessages: Message[] = [
+  // TechNova general
+  {
+    id: 'm-tng-1',
+    channelId: 'ch-tn-general',
+    senderId: 'user-alice',
+    senderName: 'Alice Johnson',
+    senderAvatar: 'AJ',
+    content: 'Good morning everyone! Welcome to our new workspace. Let us use this for all our engineering updates.',
+    timestamp: 'Yesterday, 9:15 AM',
+    reactions: [
+      { emoji: '👋', count: 4, users: ['user-raj', 'user-bob', 'user-diana', 'user-evan'] },
+      { emoji: '🎉', count: 2, users: ['user-diana', 'user-evan'] }
+    ],
+  },
+  {
+    id: 'm-tng-2',
+    channelId: 'ch-tn-general',
+    senderId: 'user-bob',
+    senderName: 'Bob Smith',
+    senderAvatar: 'BS',
+    content: 'Awesome. This workspace interface is incredibly fast. Real-time updates with Socket.IO are super snappy.',
+    timestamp: 'Yesterday, 10:02 AM',
+  },
+
+  // TechNova frontend
+  {
+    id: 'm-tnf-1',
+    channelId: 'ch-tn-frontend',
+    senderId: 'user-alice',
+    senderName: 'Alice Johnson',
+    senderAvatar: 'AJ',
+    content: 'Hey frontend team! Have you checked out the React 19 documentation yet? The compiler changes are going to save so much memoization boilerplate.',
+    timestamp: 'Today, 10:20 AM',
+    reactions: [
+      { emoji: '🚀', count: 3, users: ['user-raj', 'user-evan', 'user-diana'] },
+      { emoji: '❤️', count: 2, users: ['user-evan', 'user-raj'] }
+    ],
+    threadRepliesCount: 3,
+  },
+  {
+    id: 'm-tnf-2',
+    channelId: 'ch-tn-frontend',
+    senderId: 'user-evan',
+    senderName: 'Evan Wright',
+    senderAvatar: 'EW',
+    content: 'Yes! And Tailwind CSS v4 is a game-changer. The Vite plugin `@tailwindcss/vite` simplifies compilation so much.',
+    timestamp: 'Today, 10:25 AM',
+  },
+  {
+    id: 'm-tnf-3',
+    channelId: 'ch-tn-frontend',
+    senderId: 'user-raj',
+    senderName: 'Raj Sharma',
+    senderAvatar: 'RS',
+    content: 'Agreed! I am currently rewriting our main workspace page grid using CSS Grid and flexbox. It makes responsive layouts super clean.',
+    timestamp: 'Today, 10:28 AM',
+    reactions: [{ emoji: '🔥', count: 2, users: ['user-alice', 'user-diana'] }],
+  },
+  {
+    id: 'm-tnf-4',
+    channelId: 'ch-tn-frontend',
+    senderId: 'user-diana',
+    senderName: 'Diana Prince',
+    senderAvatar: 'DP',
+    content: 'Make sure it is fully responsive, Raj! Mobile developers need to see the channels and chat seamlessly when testing on smaller devices.',
+    timestamp: 'Today, 10:32 AM',
+  },
+
+  // TechNova backend
+  {
+    id: 'm-tnb-1',
+    channelId: 'ch-tn-backend',
+    senderId: 'user-raj',
+    senderName: 'Raj Sharma',
+    senderAvatar: 'RS',
+    content: 'Quick question for the backend devs: are we using the Redis adapter for scaling our Socket.IO connections?',
+    timestamp: 'Today, 11:00 AM',
+  },
+  {
+    id: 'm-tnb-2',
+    channelId: 'ch-tn-backend',
+    senderId: 'user-bob',
+    senderName: 'Bob Smith',
+    senderAvatar: 'BS',
+    content: 'Yes, we are. The `@socket.io/redis-adapter` combined with a Redis cluster allows us to scale horizontally. Connections can hit any backend container and events will broadcast properly.',
+    timestamp: 'Today, 11:05 AM',
+    reactions: [{ emoji: '👍', count: 3, users: ['user-raj', 'user-charlie', 'user-evan'] }],
+  },
+  {
+    id: 'm-tnb-3',
+    channelId: 'ch-tn-backend',
+    senderId: 'user-charlie',
+    senderName: 'Charlie Brown',
+    senderAvatar: 'CB',
+    content: 'I set up the cluster last night. We will run tests on the dev cluster this afternoon. Performance metrics look promising!',
+    timestamp: 'Today, 11:15 AM',
+  },
+
+  // TechNova DMs - Alice
+  {
+    id: 'm-tnda-1',
+    channelId: 'dm-tn-alice',
+    senderId: 'user-alice',
+    senderName: 'Alice Johnson',
+    senderAvatar: 'AJ',
+    content: 'Hey Raj, do you have a minute to look at the workspace switcher design?',
+    timestamp: 'Today, 1:40 PM',
+  },
+  {
+    id: 'm-tnda-2',
+    channelId: 'dm-tn-alice',
+    senderId: 'user-raj',
+    senderName: 'Raj Sharma',
+    senderAvatar: 'RS',
+    content: 'Sure! I will check the Figma link now.',
+    timestamp: 'Today, 1:42 PM',
+  },
+
+  // DesignStudio general
+  {
+    id: 'm-dsg-1',
+    channelId: 'ch-ds-general',
+    senderId: 'user-alice',
+    senderName: 'Alice Johnson',
+    senderAvatar: 'AJ',
+    content: 'Welcome to the design studio workspace! Post your design mockups here.',
+    timestamp: 'Yesterday, 3:00 PM',
+  }
+];
