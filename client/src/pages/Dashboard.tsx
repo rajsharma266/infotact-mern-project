@@ -41,7 +41,7 @@ function Dashboard({ workspaces, onSelectWorkspace, onCreateWorkspace, currentUs
       <div className="flex items-center justify-between border-b border-slate-800 pb-6 mb-8 z-10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/35">
-            AG
+            IT
           </div>
           <div>
             <span className="font-extrabold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
