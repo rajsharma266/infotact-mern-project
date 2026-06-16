@@ -1,9 +1,9 @@
 import type { User, Workspace, Channel, Message } from '../types';
 
 export const currentUser: User = {
-  id: 'user-raj',
-  name: 'Raj Sharma',
-  avatar: 'RS',
+  id: 'user-infotact',
+  name: 'Infotact Solution',
+  avatar: 'IS',
   status: 'online',
   role: 'Admin',
 };
@@ -180,7 +180,7 @@ export const mockMessages: Message[] = [
     content: 'Good morning everyone! Welcome to our new workspace. Let us use this for all our engineering updates.',
     timestamp: 'Yesterday, 9:15 AM',
     reactions: [
-      { emoji: '👋', count: 4, users: ['user-raj', 'user-bob', 'user-diana', 'user-evan'] },
+      { emoji: '👋', count: 4, users: ['user-infotact', 'user-bob', 'user-diana', 'user-evan'] },
       { emoji: '🎉', count: 2, users: ['user-diana', 'user-evan'] }
     ],
   },
@@ -204,8 +204,8 @@ export const mockMessages: Message[] = [
     content: 'Hey frontend team! Have you checked out the React 19 documentation yet? The compiler changes are going to save so much memoization boilerplate.',
     timestamp: 'Today, 10:20 AM',
     reactions: [
-      { emoji: '🚀', count: 3, users: ['user-raj', 'user-evan', 'user-diana'] },
-      { emoji: '❤️', count: 2, users: ['user-evan', 'user-raj'] }
+      { emoji: '🚀', count: 3, users: ['user-infotact', 'user-evan', 'user-diana'] },
+      { emoji: '❤️', count: 2, users: ['user-evan', 'user-infotact'] }
     ],
     threadRepliesCount: 3,
   },
@@ -221,9 +221,9 @@ export const mockMessages: Message[] = [
   {
     id: 'm-tnf-3',
     channelId: 'ch-tn-frontend',
-    senderId: 'user-raj',
-    senderName: 'Raj Sharma',
-    senderAvatar: 'RS',
+    senderId: 'user-infotact',
+    senderName: 'Infotact Solution',
+    senderAvatar: 'IS',
     content: 'Agreed! I am currently rewriting our main workspace page grid using CSS Grid and flexbox. It makes responsive layouts super clean.',
     timestamp: 'Today, 10:28 AM',
     reactions: [{ emoji: '🔥', count: 2, users: ['user-alice', 'user-diana'] }],
@@ -234,7 +234,7 @@ export const mockMessages: Message[] = [
     senderId: 'user-diana',
     senderName: 'Diana Prince',
     senderAvatar: 'DP',
-    content: 'Make sure it is fully responsive, Raj! Mobile developers need to see the channels and chat seamlessly when testing on smaller devices.',
+    content: 'Make sure it is fully responsive, Infotact! Mobile developers need to see the channels and chat seamlessly when testing on smaller devices.',
     timestamp: 'Today, 10:32 AM',
   },
 
@@ -242,9 +242,9 @@ export const mockMessages: Message[] = [
   {
     id: 'm-tnb-1',
     channelId: 'ch-tn-backend',
-    senderId: 'user-raj',
-    senderName: 'Raj Sharma',
-    senderAvatar: 'RS',
+    senderId: 'user-infotact',
+    senderName: 'Infotact Solution',
+    senderAvatar: 'IS',
     content: 'Quick question for the backend devs: are we using the Redis adapter for scaling our Socket.IO connections?',
     timestamp: 'Today, 11:00 AM',
   },
@@ -256,7 +256,7 @@ export const mockMessages: Message[] = [
     senderAvatar: 'BS',
     content: 'Yes, we are. The `@socket.io/redis-adapter` combined with a Redis cluster allows us to scale horizontally. Connections can hit any backend container and events will broadcast properly.',
     timestamp: 'Today, 11:05 AM',
-    reactions: [{ emoji: '👍', count: 3, users: ['user-raj', 'user-charlie', 'user-evan'] }],
+    reactions: [{ emoji: '👍', count: 3, users: ['user-infotact', 'user-charlie', 'user-evan'] }],
   },
   {
     id: 'm-tnb-3',
@@ -275,15 +275,15 @@ export const mockMessages: Message[] = [
     senderId: 'user-alice',
     senderName: 'Alice Johnson',
     senderAvatar: 'AJ',
-    content: 'Hey Raj, do you have a minute to look at the workspace switcher design?',
+    content: 'Hey Infotact, do you have a minute to look at the workspace switcher design?',
     timestamp: 'Today, 1:40 PM',
   },
   {
     id: 'm-tnda-2',
     channelId: 'dm-tn-alice',
-    senderId: 'user-raj',
-    senderName: 'Raj Sharma',
-    senderAvatar: 'RS',
+    senderId: 'user-infotact',
+    senderName: 'Infotact Solution',
+    senderAvatar: 'IS',
     content: 'Sure! I will check the Figma link now.',
     timestamp: 'Today, 1:42 PM',
   },
