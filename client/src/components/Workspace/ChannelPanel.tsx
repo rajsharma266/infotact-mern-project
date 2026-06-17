@@ -14,6 +14,7 @@ interface ChannelPanelProps {
   users: User[];
   currentUser: User;
   onGoToDashboard: () => void;
+  unreadCounts?: Record<string, number>;
 }
 
 function ChannelPanel({
@@ -27,6 +28,7 @@ function ChannelPanel({
   users,
   currentUser,
   onGoToDashboard,
+  unreadCounts,
 }: ChannelPanelProps) {
   const [micActive, setMicActive] = useState<boolean>(true);
   const [soundActive, setSoundActive] = useState<boolean>(true);
@@ -105,6 +107,7 @@ function ChannelPanel({
           onCreateDM={onCreateDM}
           users={users}
           currentUser={currentUser}
+          unreadCounts={unreadCounts}
         />
       </div>
 

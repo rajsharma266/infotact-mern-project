@@ -10,6 +10,7 @@ interface ChannelListProps {
   onCreateDM: (recipientId: string) => void;
   users: User[];
   currentUser: User;
+  unreadCounts?: Record<string, number>;
 }
 
 function ChannelList({
@@ -20,6 +21,7 @@ function ChannelList({
   onCreateDM,
   users,
   currentUser,
+  unreadCounts,
 }: ChannelListProps) {
   const [channelsCollapsed, setChannelsCollapsed] = useState(false);
   const [dmsCollapsed, setDmsCollapsed] = useState(false);
@@ -80,6 +82,7 @@ function ChannelList({
           <div className="flex flex-col mt-0.5 space-y-0.5">
             {textChannels.map(channel => {
               const isActive = channel.id === activeChannelId;
+              const unreadCount = unreadCounts?.[channel.id] || 0;
               return (
                 <div
                   key={channel.id}
@@ -87,17 +90,25 @@ function ChannelList({
                   className={`flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-150 ${
                     isActive 
                       ? 'bg-indigo-600 text-white font-semibold' 
-                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                      : unreadCount > 0
+                        ? 'text-slate-100 font-bold bg-slate-800/30'
+                        : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate min-w-0">
                     {channel.isPrivate ? (
-                      <Lock size={13} className={isActive ? 'text-white' : 'text-slate-500'} />
+                      <Lock size={13} className={isActive ? 'text-white' : unreadCount > 0 ? 'text-slate-300' : 'text-slate-500'} />
                     ) : (
-                      <Hash size={13} className={isActive ? 'text-white' : 'text-slate-500'} />
+                      <Hash size={13} className={isActive ? 'text-white' : unreadCount > 0 ? 'text-slate-300' : 'text-slate-500'} />
                     )}
                     <span className="text-sm truncate">{channel.name}</span>
                   </div>
+
+                  {unreadCount > 0 && !isActive && (
+                    <span className="flex-shrink-0 ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full min-w-[18px] text-center leading-none">
+                      {unreadCount}
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -136,6 +147,7 @@ function ChannelList({
               const isActive = dm.id === activeChannelId;
               const recipient = users.find(u => u.id === dm.recipientId);
               if (!recipient) return null;
+              const unreadCount = unreadCounts?.[dm.id] || 0;
               
               // Status color helper
               const statusColors = {
@@ -148,13 +160,15 @@ function ChannelList({
                 <div
                   key={dm.id}
                   onClick={() => onSelectChannel(dm.id)}
-                  className={`flex items-center px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-150 ${
+                  className={`flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-150 ${
                     isActive 
                       ? 'bg-indigo-600 text-white font-semibold' 
-                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                      : unreadCount > 0
+                        ? 'text-slate-100 font-bold bg-slate-800/30'
+                        : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 truncate min-w-0 w-full">
+                  <div className="flex items-center gap-2.5 truncate min-w-0">
                     {/* DM Avatar with status badge */}
                     <div className="relative flex-shrink-0">
                       <div className={`w-5 h-5 rounded-md text-[9px] font-bold flex items-center justify-center border ${
@@ -171,6 +185,12 @@ function ChannelList({
 
                     <span className="text-sm truncate">{recipient.name}</span>
                   </div>
+
+                  {unreadCount > 0 && !isActive && (
+                    <span className="flex-shrink-0 ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full min-w-[18px] text-center leading-none">
+                      {unreadCount}
+                    </span>
+                  )}
                 </div>
               );
             })}

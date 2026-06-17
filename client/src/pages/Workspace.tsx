@@ -21,6 +21,7 @@ interface WorkspaceProps {
   currentUser: User;
   typingUsers: string[];
   onGoToDashboard: () => void;
+  unreadCounts?: Record<string, number>;
 }
 
 function Workspace({
@@ -39,6 +40,7 @@ function Workspace({
   currentUser,
   typingUsers,
   onGoToDashboard,
+  unreadCounts,
 }: WorkspaceProps) {
   const [showMembersPanel, setShowMembersPanel] = useState<boolean>(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
@@ -76,6 +78,7 @@ function Workspace({
           users={workspaceMembers}
           currentUser={currentUser}
           onGoToDashboard={onGoToDashboard}
+          unreadCounts={unreadCounts}
         />
       </div>
 
@@ -106,6 +109,7 @@ function Workspace({
               users={workspaceMembers}
               currentUser={currentUser}
               onGoToDashboard={onGoToDashboard}
+              unreadCounts={unreadCounts}
             />
           </div>
           {/* Backdrop click to close */}

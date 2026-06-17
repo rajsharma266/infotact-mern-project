@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Dashboard from './pages/Dashboard';
 import Workspace from './pages/Workspace';
 import { mockWorkspaces, mockChannels, mockMessages, mockUsers, currentUser } from './data/mockData';
@@ -13,8 +13,28 @@ function App() {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [typing, setTyping] = useState<string[]>([]);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
+    'ch-tn-general': 2,
+    'ch-tn-backend': 5,
+    'dm-tn-bob': 1,
+  });
   const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
   const [guestName, setGuestName] = useState<string>('');
+
+  const activeChannelIdRef = useRef(activeChannelId);
+
+  useEffect(() => {
+    activeChannelIdRef.current = activeChannelId;
+    if (activeChannelId) {
+      setUnreadCounts(prev => {
+        if (!prev[activeChannelId]) return prev;
+        return {
+          ...prev,
+          [activeChannelId]: 0,
+        };
+      });
+    }
+  }, [activeChannelId]);
 
   // Parse invite query parameters on startup
   useEffect(() => {
@@ -233,6 +253,13 @@ function App() {
               reactions: []
             };
             setMessages(prev => [...prev, replyMsg]);
+
+            if (activeChannelIdRef.current !== replyMsg.channelId) {
+              setUnreadCounts(prev => ({
+                ...prev,
+                [replyMsg.channelId]: (prev[replyMsg.channelId] || 0) + 1,
+              }));
+            }
           }, 2000);
         }, 800);
       }
@@ -422,6 +449,7 @@ function App() {
           currentUser={currentUser}
           typingUsers={typing}
           onGoToDashboard={() => setCurrentView('dashboard')}
+          unreadCounts={unreadCounts}
         />
       )}
     </div>
