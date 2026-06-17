@@ -1,4 +1,4 @@
-import { Hash, Lock, Search, Bell, Menu, Info } from 'lucide-react';
+import { Hash, Lock, Search, Bell, Menu, Info, X } from 'lucide-react';
 
 interface ChatHeaderProps {
   channelName: string | undefined;
@@ -8,6 +8,8 @@ interface ChatHeaderProps {
   toggleMembersList: () => void;
   showMembersList: boolean;
   toggleMobileSidebar: () => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
 function ChatHeader({
@@ -18,6 +20,8 @@ function ChatHeader({
   toggleMembersList,
   showMembersList,
   toggleMobileSidebar,
+  searchQuery,
+  setSearchQuery,
 }: ChatHeaderProps) {
   if (!channelName) {
     return (
@@ -84,10 +88,20 @@ function ChatHeader({
           <input 
             type="text" 
             placeholder="Search channel..." 
-            className="w-44 bg-slate-950/70 border border-slate-800/80 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500/60 focus:w-56 transition-all duration-300"
-            disabled
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-44 bg-slate-950/70 border border-slate-800/80 rounded-lg pl-8 pr-8 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500/60 focus:w-56 transition-all duration-300"
           />
           <Search size={12} className="absolute left-2.5 text-slate-500" />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 p-0.5 rounded hover:bg-slate-850 text-slate-400 hover:text-slate-200 cursor-pointer transition"
+              title="Clear search"
+            >
+              <X size={10} />
+            </button>
+          )}
         </div>
 
         {/* Alert Mute Notification bell (disabled mockup) */}

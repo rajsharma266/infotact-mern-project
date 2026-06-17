@@ -35,6 +35,17 @@ function ChannelPanel({
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const filteredChannels = channels.filter(channel => {
+    if (channel.type === 'channel') {
+      return channel.name.toLowerCase().includes(searchQuery.toLowerCase());
+    } else if (channel.type === 'dm') {
+      const recipient = users.find(u => u.id === channel.recipientId);
+      return recipient ? recipient.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    }
+    return false;
+  });
 
   return (
     <div className="w-64 bg-slate-900 border-r border-slate-800/80 flex flex-col h-full select-none">
@@ -86,21 +97,33 @@ function ChannelPanel({
 
       {/* Workspace Search (simulated) */}
       <div className="p-3">
-        <div className="relative flex items-center bg-slate-950/80 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-500">
-          <Search size={12} className="mr-1.5" />
-          <input 
-            type="text" 
-            placeholder="Jump to..." 
-            className="bg-transparent border-none focus:outline-none w-full text-slate-300"
-            disabled
-          />
+        <div className="relative flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-500">
+          <div className="flex items-center flex-1 min-w-0">
+            <Search size={12} className="mr-1.5 shrink-0" />
+            <input 
+              type="text" 
+              placeholder="Jump to..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent border-none focus:outline-none w-full text-slate-300"
+            />
+          </div>
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')} 
+              className="text-slate-500 hover:text-slate-300 cursor-pointer pl-1 shrink-0"
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
 
       {/* Main lists (Channels and DMs) */}
       <div className="flex-1 overflow-y-auto">
         <ChannelList
-          channels={channels}
+          channels={filteredChannels}
           activeChannelId={activeChannelId}
           onSelectChannel={onSelectChannel}
           onCreateChannel={onCreateChannel}

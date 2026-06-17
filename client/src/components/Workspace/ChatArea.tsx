@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import type { Channel, Message, User } from '../../types';
 import ChatHeader from './ChatHeader';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import TypingIndicator from './TypingIndicator';
 import EmptyState from './EmptyState';
+import { Search } from 'lucide-react';
 
 interface ChatAreaProps {
   activeChannel: Channel | undefined;
@@ -28,6 +30,17 @@ function ChatArea({
   toggleMobileSidebar,
   currentUser,
 }: ChatAreaProps) {
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Clear search query when channel switches
+  useEffect(() => {
+    setSearchQuery('');
+  }, [activeChannel?.id]);
+
+  const filteredMessages = searchQuery
+    ? messages.filter(msg => msg.content.toLowerCase().includes(searchQuery.toLowerCase()))
+    : messages;
+
   return (
     <div className="flex flex-col flex-1 h-full min-w-0 bg-slate-900/10">
       
@@ -40,18 +53,36 @@ function ChatArea({
         toggleMembersList={toggleMembersList}
         showMembersList={showMembersList}
         toggleMobileSidebar={toggleMobileSidebar}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
 
       {/* 2. Chat Contents */}
       {activeChannel ? (
         <div className="flex-1 flex flex-col min-h-0 relative">
           
-          {/* Scrollable Message List */}
-          <MessageList 
-            messages={messages} 
-            onAddReaction={onAddReaction} 
-            currentUser={currentUser} 
-          />
+          {/* Scrollable Message List or Search Empty State */}
+          {searchQuery && filteredMessages.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-slate-500 select-none">
+              <Search size={36} className="mb-2.5 text-slate-700 opacity-60" />
+              <p className="text-sm font-bold text-slate-400">No results found</p>
+              <p className="text-xs text-slate-500 mt-1 text-center max-w-xs leading-relaxed">
+                We couldn't find any messages matching "{searchQuery}" in this channel.
+              </p>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mt-4 px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-750 text-indigo-400 hover:text-indigo-300 rounded-xl transition cursor-pointer"
+              >
+                Clear Search
+              </button>
+            </div>
+          ) : (
+            <MessageList 
+              messages={filteredMessages} 
+              onAddReaction={onAddReaction} 
+              currentUser={currentUser} 
+            />
+          )}
 
           {/* Typing Indicator Overlay / Footer */}
           <TypingIndicator typingUsers={typingUsers} />
