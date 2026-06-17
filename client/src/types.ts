@@ -40,4 +40,5 @@ export interface Workspace {
   description: string;
   logo: string;
   membersCount: number;
+  userIds?: string[];
 }

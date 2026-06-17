@@ -47,6 +47,9 @@ function Workspace({
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const activeChannel = channels.find((c) => c.id === activeChannelId);
 
+  // Filter users to only include members of this workspace
+  const workspaceMembers = users.filter((u) => activeWorkspace?.userIds?.includes(u.id) ?? true);
+
   return (
     <div className="flex-1 flex h-screen bg-slate-950 text-slate-100 overflow-hidden relative">
       
@@ -63,13 +66,14 @@ function Workspace({
       {/* 2. CHANNELS PANEL (DESKTOP & MOBILE TRANSITION SHEET) */}
       <div className="hidden md:flex">
         <ChannelPanel
+          workspaceId={activeWorkspaceId}
           workspaceName={activeWorkspace?.name || 'Workspace'}
           channels={channels}
           activeChannelId={activeChannelId}
           onSelectChannel={onSelectChannel}
           onCreateChannel={onCreateChannel}
           onCreateDM={onCreateDM}
-          users={users}
+          users={workspaceMembers}
           currentUser={currentUser}
           onGoToDashboard={onGoToDashboard}
         />
@@ -89,6 +93,7 @@ function Workspace({
             />
             {/* Main channels panel list */}
             <ChannelPanel
+              workspaceId={activeWorkspaceId}
               workspaceName={activeWorkspace?.name || 'Workspace'}
               channels={channels}
               activeChannelId={activeChannelId}
@@ -98,7 +103,7 @@ function Workspace({
               }}
               onCreateChannel={onCreateChannel}
               onCreateDM={onCreateDM}
-              users={users}
+              users={workspaceMembers}
               currentUser={currentUser}
               onGoToDashboard={onGoToDashboard}
             />
@@ -134,7 +139,7 @@ function Workspace({
             channelDescription={activeChannel.description}
             isPrivate={activeChannel.isPrivate}
             type={activeChannel.type}
-            users={users}
+            users={workspaceMembers}
             onClose={() => setShowMembersPanel(false)}
           />
         </div>

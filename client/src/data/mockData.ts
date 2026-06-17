@@ -52,21 +52,24 @@ export const mockWorkspaces: Workspace[] = [
     name: 'TechNova',
     description: 'Engineering and Product Development collaboration space',
     logo: 'TN',
-    membersCount: 15,
+    membersCount: 5,
+    userIds: ['user-infotact', 'user-alice', 'user-bob', 'user-diana', 'user-evan'],
   },
   {
     id: 'ws-designstudio',
     name: 'DesignStudio',
     description: 'UI/UX Design, creative branding and branding guidelines',
     logo: 'DS',
-    membersCount: 8,
+    membersCount: 3,
+    userIds: ['user-alice', 'user-charlie', 'user-diana'],
   },
   {
     id: 'ws-marketinghub',
     name: 'MarketingHub',
     description: 'Social campaigns, growth hacking, and ad strategies',
     logo: 'MH',
-    membersCount: 12,
+    membersCount: 2,
+    userIds: ['user-bob', 'user-evan'],
   },
 ];
 
