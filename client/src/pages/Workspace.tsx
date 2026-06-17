@@ -22,6 +22,8 @@ interface WorkspaceProps {
   typingUsers: string[];
   onGoToDashboard: () => void;
   unreadCounts?: Record<string, number>;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
 }
 
 function Workspace({
@@ -41,6 +43,8 @@ function Workspace({
   typingUsers,
   onGoToDashboard,
   unreadCounts,
+  theme,
+  onToggleTheme,
 }: WorkspaceProps) {
   const [showMembersPanel, setShowMembersPanel] = useState<boolean>(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
@@ -132,6 +136,8 @@ function Workspace({
           showMembersList={showMembersPanel}
           toggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           currentUser={currentUser}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
         />
       </div>
 

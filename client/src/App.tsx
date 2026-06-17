@@ -20,6 +20,25 @@ function App() {
   });
   const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
   const [guestName, setGuestName] = useState<string>('');
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   const activeChannelIdRef = useRef(activeChannelId);
 
@@ -431,6 +450,8 @@ function App() {
           onSelectWorkspace={handleSelectWorkspace} 
           onCreateWorkspace={handleCreateWorkspace}
           currentUser={currentUser}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       ) : (
         <Workspace 
@@ -450,6 +471,8 @@ function App() {
           typingUsers={typing}
           onGoToDashboard={() => setCurrentView('dashboard')}
           unreadCounts={unreadCounts}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       )}
     </div>

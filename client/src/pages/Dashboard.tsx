@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import type { Workspace, User } from '../types';
-import { Plus, Users, ArrowRight, LayoutGrid, Activity, Bell, Compass } from 'lucide-react';
+import { Plus, Users, ArrowRight, LayoutGrid, Activity, Bell, Compass, Sun, Moon } from 'lucide-react';
 
 interface DashboardProps {
   workspaces: Workspace[];
   onSelectWorkspace: (id: string) => void;
   onCreateWorkspace: (name: string, description: string) => void;
   currentUser: User;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
 }
 
-function Dashboard({ workspaces, onSelectWorkspace, onCreateWorkspace, currentUser }: DashboardProps) {
+function Dashboard({
+  workspaces,
+  onSelectWorkspace,
+  onCreateWorkspace,
+  currentUser,
+  theme,
+  onToggleTheme,
+}: DashboardProps) {
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -53,14 +62,25 @@ function Dashboard({ workspaces, onSelectWorkspace, onCreateWorkspace, currentUs
           </div>
         </div>
 
-        {/* User Card */}
-        <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center font-bold text-xs text-white">
-            {currentUser.avatar}
-          </div>
-          <div className="hidden sm:block text-left">
-            <div className="text-xs font-semibold text-slate-200">{currentUser.name}</div>
-            <div className="text-[10px] text-slate-400">Developer Account</div>
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle Button */}
+          <button 
+            onClick={onToggleTheme}
+            className="p-2.5 bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun size={16} className="text-amber-500" /> : <Moon size={16} className="text-indigo-400" />}
+          </button>
+
+          {/* User Card */}
+          <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center font-bold text-xs text-white">
+              {currentUser.avatar}
+            </div>
+            <div className="hidden sm:block text-left">
+              <div className="text-xs font-semibold text-slate-200">{currentUser.name}</div>
+              <div className="text-[10px] text-slate-400">Developer Account</div>
+            </div>
           </div>
         </div>
       </div>

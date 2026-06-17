@@ -17,6 +17,8 @@ interface ChatAreaProps {
   showMembersList: boolean;
   toggleMobileSidebar: () => void;
   currentUser: User;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
 }
 
 function ChatArea({
@@ -29,6 +31,8 @@ function ChatArea({
   showMembersList,
   toggleMobileSidebar,
   currentUser,
+  theme,
+  onToggleTheme,
 }: ChatAreaProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -55,6 +59,8 @@ function ChatArea({
         toggleMobileSidebar={toggleMobileSidebar}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
       />
 
       {/* 2. Chat Contents */}

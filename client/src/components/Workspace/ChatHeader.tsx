@@ -1,4 +1,4 @@
-import { Hash, Lock, Search, Bell, Menu, Info, X } from 'lucide-react';
+import { Hash, Lock, Search, Bell, Menu, Info, X, Sun, Moon } from 'lucide-react';
 
 interface ChatHeaderProps {
   channelName: string | undefined;
@@ -10,6 +10,8 @@ interface ChatHeaderProps {
   toggleMobileSidebar: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
 }
 
 function ChatHeader({
@@ -22,6 +24,8 @@ function ChatHeader({
   toggleMobileSidebar,
   searchQuery,
   setSearchQuery,
+  theme,
+  onToggleTheme,
 }: ChatHeaderProps) {
   if (!channelName) {
     return (
@@ -111,6 +115,15 @@ function ChatHeader({
           disabled
         >
           <Bell size={16} />
+        </button>
+
+        {/* Theme Toggle Button */}
+        <button 
+          onClick={onToggleTheme}
+          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme === 'dark' ? <Sun size={16} className="text-amber-500" /> : <Moon size={16} className="text-indigo-400" />}
         </button>
 
         {/* Info panel toggle */}
