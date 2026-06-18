@@ -103,6 +103,7 @@ function App() {
       description: 'General discussion',
       isPrivate: false,
       type: 'channel',
+      userIds: [currentUser.id],
     };
     setChannels(prev => [...prev, newChan]);
     
@@ -159,6 +160,23 @@ function App() {
       })
     );
 
+    // Also update general channel of the workspace to include this user
+    setChannels(prevChannels =>
+      prevChannels.map(c => {
+        if (c.workspaceId === workspaceId && c.name === 'general') {
+          const updatedUserIds = c.userIds ? [...c.userIds] : [];
+          if (!updatedUserIds.includes(finalUserId)) {
+            updatedUserIds.push(finalUserId);
+          }
+          return {
+            ...c,
+            userIds: updatedUserIds,
+          };
+        }
+        return c;
+      })
+    );
+
     // Navigate to new workspace general channel
     setActiveWorkspaceId(workspaceId);
     const wsChannels = channels.filter(c => c.workspaceId === workspaceId);
@@ -184,6 +202,7 @@ function App() {
       description,
       isPrivate,
       type: 'channel',
+      userIds: [currentUser.id],
     };
     setChannels(prev => [...prev, newChan]);
     setActiveChannelId(newChan.id);
@@ -210,9 +229,37 @@ function App() {
       isPrivate: true,
       type: 'dm',
       recipientId,
+      userIds: [currentUser.id, recipientId],
     };
     setChannels(prev => [...prev, newChan]);
     setActiveChannelId(newChan.id);
+  };
+
+  const handleJoinChannel = (channelId: string) => {
+    setChannels(prev => prev.map(c => {
+      if (c.id === channelId) {
+        const updatedUserIds = c.userIds ? [...c.userIds] : [];
+        if (!updatedUserIds.includes(currentUser.id)) {
+          updatedUserIds.push(currentUser.id);
+        }
+        return { ...c, userIds: updatedUserIds };
+      }
+      return c;
+    }));
+    setActiveChannelId(channelId);
+  };
+
+  const handleInviteToChannel = (channelId: string, userId: string) => {
+    setChannels(prev => prev.map(c => {
+      if (c.id === channelId) {
+        const updatedUserIds = c.userIds ? [...c.userIds] : [];
+        if (!updatedUserIds.includes(userId)) {
+          updatedUserIds.push(userId);
+        }
+        return { ...c, userIds: updatedUserIds };
+      }
+      return c;
+    }));
   };
 
   const handleSendMessage = (content: string) => {
@@ -473,6 +520,8 @@ function App() {
           unreadCounts={unreadCounts}
           theme={theme}
           onToggleTheme={toggleTheme}
+          onJoinChannel={handleJoinChannel}
+          onInviteToChannel={handleInviteToChannel}
         />
       )}
     </div>

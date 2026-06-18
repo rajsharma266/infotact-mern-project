@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Channel, User } from '../../types';
-import { Plus, Hash, Lock, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Hash, Lock, ChevronDown, ChevronRight, Compass } from 'lucide-react';
 
 interface ChannelListProps {
   channels: Channel[];
@@ -11,6 +11,7 @@ interface ChannelListProps {
   users: User[];
   currentUser: User;
   unreadCounts?: Record<string, number>;
+  onJoinChannel?: (id: string) => void;
 }
 
 function ChannelList({
@@ -29,15 +30,17 @@ function ChannelList({
   // Modal states
   const [showChanModal, setShowChanModal] = useState(false);
   const [showDMModal, setShowDMModal] = useState(false);
+  const [showBrowseModal, setShowBrowseModal] = useState(false);
+  const [browseSearch, setBrowseSearch] = useState('');
 
   // Form states
   const [chanName, setChanName] = useState('');
   const [chanDesc, setChanDesc] = useState('');
   const [chanPrivate, setChanPrivate] = useState(false);
 
-  // Filter channels & DMs
-  const textChannels = channels.filter(c => c.type === 'channel');
-  const dmChannels = channels.filter(c => c.type === 'dm');
+  // Filter channels & DMs (only display joined channels in the sidebar)
+  const textChannels = channels.filter(c => c.type === 'channel' && (c.userIds?.includes(currentUser.id) ?? true));
+  const dmChannels = channels.filter(c => c.type === 'dm' && (c.userIds?.includes(currentUser.id) ?? true));
 
   const handleCreateChannelSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,13 +71,22 @@ function ChannelList({
             <span>Channels</span>
           </button>
           
-          <button 
-            onClick={() => setShowChanModal(true)}
-            className="opacity-0 group-hover:opacity-100 hover:bg-slate-800 p-0.5 rounded cursor-pointer transition"
-            title="Create Channel"
-          >
-            <Plus size={14} className="text-slate-400" />
-          </button>
+          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition duration-150">
+            <button 
+              onClick={() => setShowBrowseModal(true)}
+              className="hover:bg-slate-800 p-0.5 rounded cursor-pointer"
+              title="Browse Channels"
+            >
+              <Compass size={14} className="text-slate-400" />
+            </button>
+            <button 
+              onClick={() => setShowChanModal(true)}
+              className="hover:bg-slate-800 p-0.5 rounded cursor-pointer"
+              title="Create Channel"
+            >
+              <Plus size={14} className="text-slate-400" />
+            </button>
+          </div>
         </div>
 
         {/* Channels List */}
@@ -313,6 +325,94 @@ function ChannelList({
               <button 
                 type="button"
                 onClick={() => setShowDMModal(false)}
+                className="px-3.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BROWSE CHANNELS MODAL */}
+      {showBrowseModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl relative text-left animate-[scaleIn_0.2s_ease-out]">
+            <h3 className="text-base font-bold text-white mb-1">Browse Channels</h3>
+            <p className="text-xs text-slate-400 mb-4">
+              Search and join public channels in this workspace.
+            </p>
+
+            {/* Search */}
+            <div className="mb-4">
+              <input 
+                type="text" 
+                placeholder="Search public channels..." 
+                value={browseSearch}
+                onChange={(e) => setBrowseSearch(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition"
+              />
+            </div>
+
+            {/* List */}
+            <div className="max-h-60 overflow-y-auto space-y-2.5 pr-1">
+              {channels
+                .filter(c => c.type === 'channel' && !c.isPrivate) // Public channels only
+                .filter(c => c.name.toLowerCase().includes(browseSearch.toLowerCase()))
+                .map(c => {
+                  const isMember = c.userIds?.includes(currentUser.id) ?? false;
+                  return (
+                    <div 
+                      key={c.id}
+                      className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:bg-slate-950/70 transition"
+                    >
+                      <div className="min-w-0 flex-1 pr-3">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+                          <Hash size={13} className="text-slate-400" />
+                          <span className="truncate">{c.name}</span>
+                        </div>
+                        {c.description && (
+                          <p className="text-[10px] text-slate-400 truncate mt-0.5">{c.description}</p>
+                        )}
+                      </div>
+
+                      {isMember ? (
+                        <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 text-[10px] font-extrabold rounded-lg select-none">
+                          Joined
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onJoinChannel) {
+                              onJoinChannel(c.id);
+                            }
+                            setShowBrowseModal(false);
+                            setBrowseSearch('');
+                          }}
+                          className="px-3.5 py-1.5 text-[10px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition cursor-pointer"
+                        >
+                          Join
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              
+              {channels.filter(c => c.type === 'channel' && !c.isPrivate).filter(c => c.name.toLowerCase().includes(browseSearch.toLowerCase())).length === 0 && (
+                <div className="text-center py-6 text-xs text-slate-500 font-semibold">
+                  No public channels found matching "{browseSearch}"
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end pt-3 border-t border-slate-800/60 mt-4">
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowBrowseModal(false);
+                  setBrowseSearch('');
+                }}
                 className="px-3.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
               >
                 Close

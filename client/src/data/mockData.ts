@@ -82,6 +82,7 @@ export const mockChannels: Channel[] = [
     description: 'Company-wide announcements and general chatter',
     isPrivate: false,
     type: 'channel',
+    userIds: ['user-infotact', 'user-alice', 'user-bob', 'user-diana', 'user-evan'],
   },
   {
     id: 'ch-tn-frontend',
@@ -90,6 +91,7 @@ export const mockChannels: Channel[] = [
     description: 'React 19, Tailwind CSS v4, and web client engineering',
     isPrivate: false,
     type: 'channel',
+    userIds: ['user-infotact', 'user-alice', 'user-evan', 'user-diana'],
   },
   {
     id: 'ch-tn-backend',
@@ -98,6 +100,7 @@ export const mockChannels: Channel[] = [
     description: 'Node.js, Express, Socket.io, and Redis architectures',
     isPrivate: false,
     type: 'channel',
+    userIds: ['user-bob', 'user-evan', 'user-charlie'], // Exclude current user (user-infotact) for testing Browse & Join
   },
   {
     id: 'ch-tn-security',
@@ -106,6 +109,7 @@ export const mockChannels: Channel[] = [
     description: 'Private security monitoring and vulnerability tracking',
     isPrivate: true,
     type: 'channel',
+    userIds: ['user-infotact', 'user-diana'],
   },
   // TechNova DMs (simulated channels)
   {
@@ -116,6 +120,7 @@ export const mockChannels: Channel[] = [
     isPrivate: true,
     type: 'dm',
     recipientId: 'user-alice',
+    userIds: ['user-infotact', 'user-alice'],
   },
   {
     id: 'dm-tn-bob',
@@ -125,6 +130,7 @@ export const mockChannels: Channel[] = [
     isPrivate: true,
     type: 'dm',
     recipientId: 'user-bob',
+    userIds: ['user-infotact', 'user-bob'],
   },
 
   // DesignStudio Channels
@@ -135,6 +141,7 @@ export const mockChannels: Channel[] = [
     description: 'Design team general discussions',
     isPrivate: false,
     type: 'channel',
+    userIds: ['user-alice', 'user-charlie', 'user-diana'],
   },
   {
     id: 'ch-ds-figma',
@@ -143,6 +150,7 @@ export const mockChannels: Channel[] = [
     description: 'Figma components, design system library, and assets updates',
     isPrivate: false,
     type: 'channel',
+    userIds: ['user-alice', 'user-charlie'],
   },
   {
     id: 'ch-ds-feedback',
@@ -151,6 +159,7 @@ export const mockChannels: Channel[] = [
     description: 'Constructive critiques on ongoing client layouts',
     isPrivate: false,
     type: 'channel',
+    userIds: ['user-alice', 'user-charlie', 'user-diana'],
   },
 
   // MarketingHub Channels
@@ -161,6 +170,7 @@ export const mockChannels: Channel[] = [
     description: 'Marketing general chatter',
     isPrivate: false,
     type: 'channel',
+    userIds: ['user-bob', 'user-evan'],
   },
   {
     id: 'ch-mh-seo',
@@ -169,6 +179,7 @@ export const mockChannels: Channel[] = [
     description: 'Organic search optimizations and search console monitoring',
     isPrivate: false,
     type: 'channel',
+    userIds: ['user-bob', 'user-evan'],
   },
 ];
 

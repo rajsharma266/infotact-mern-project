@@ -1,25 +1,33 @@
 import { useState } from 'react';
 import type { User } from '../../types';
-import { X, Hash, Lock, Search, ShieldCheck } from 'lucide-react';
+import { X, Hash, Lock, Search, ShieldCheck, UserPlus } from 'lucide-react';
 
 interface MembersListProps {
+  channelId: string;
   channelName: string;
   channelDescription: string;
   isPrivate: boolean;
   type: 'channel' | 'dm';
   users: User[];
+  allWorkspaceUsers: User[];
   onClose: () => void;
+  onInviteToChannel?: (channelId: string, userId: string) => void;
 }
 
 function MembersList({
+  channelId,
   channelName,
   channelDescription,
   isPrivate,
   type,
   users,
+  allWorkspaceUsers,
   onClose,
+  onInviteToChannel,
 }: MembersListProps) {
   const [search, setSearch] = useState('');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
   const isDM = type === 'dm';
 
   // Filter members based on search
@@ -86,8 +94,18 @@ function MembersList({
 
         {/* Members List section */}
         <div className="space-y-3 flex flex-col">
-          <div className="text-xs uppercase font-extrabold tracking-wider text-slate-500 px-1 select-none">
-            {isDM ? 'Participants' : `Members (${users.length})`}
+          <div className="flex items-center justify-between text-xs uppercase font-extrabold tracking-wider text-slate-500 px-1 select-none">
+            <span>{isDM ? 'Participants' : `Members (${users.length})`}</span>
+            {!isDM && (
+              <button 
+                type="button"
+                onClick={() => setShowInviteModal(true)}
+                className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition cursor-pointer flex items-center gap-1 normal-case"
+              >
+                <UserPlus size={12} />
+                Add People
+              </button>
+            )}
           </div>
 
           {/* Search box */}
@@ -157,6 +175,85 @@ function MembersList({
         </div>
 
       </div>
+
+      {/* INVITE TO CHANNEL MODAL */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative text-left animate-[scaleIn_0.2s_ease-out]">
+            <h3 className="text-base font-bold text-white mb-1.5">Add People</h3>
+            <p className="text-xs text-slate-400 mb-4">
+              Add members of this workspace to <span className="text-indigo-400 font-bold">#{channelName}</span>.
+            </p>
+
+            <div className="mb-4">
+              <input 
+                type="text" 
+                placeholder="Search workspace members..." 
+                value={inviteSearch}
+                onChange={(e) => setInviteSearch(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition"
+              />
+            </div>
+
+            <div className="max-h-60 overflow-y-auto space-y-1 pr-1">
+              {allWorkspaceUsers
+                .filter(u => !users.some(member => member.id === u.id)) // Non-members only
+                .filter(u => u.name.toLowerCase().includes(inviteSearch.toLowerCase()))
+                .map(u => (
+                  <div 
+                    key={u.id}
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-800/40 transition group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-slate-950 border border-slate-850 text-indigo-300 text-xs font-extrabold flex items-center justify-center">
+                        {u.avatar}
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-bold text-slate-200 group-hover:text-indigo-400 transition-colors truncate">
+                          {u.name}
+                        </div>
+                        <div className="text-[9px] text-slate-500 uppercase font-semibold">{u.status}</div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onInviteToChannel) {
+                          onInviteToChannel(channelId, u.id);
+                        }
+                      }}
+                      className="px-3 py-1.5 text-[10px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition cursor-pointer"
+                    >
+                      Add
+                    </button>
+                  </div>
+                ))}
+
+              {allWorkspaceUsers
+                .filter(u => !users.some(member => member.id === u.id))
+                .filter(u => u.name.toLowerCase().includes(inviteSearch.toLowerCase())).length === 0 && (
+                <div className="text-center py-6 text-xs text-slate-500 font-semibold">
+                  All workspace members are in this channel.
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end pt-3 border-t border-slate-800/60 mt-4">
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowInviteModal(false);
+                  setInviteSearch('');
+                }}
+                className="px-3.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

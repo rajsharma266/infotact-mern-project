@@ -24,6 +24,8 @@ interface WorkspaceProps {
   unreadCounts?: Record<string, number>;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
+  onJoinChannel?: (id: string) => void;
+  onInviteToChannel?: (channelId: string, userId: string) => void;
 }
 
 function Workspace({
@@ -45,6 +47,8 @@ function Workspace({
   unreadCounts,
   theme,
   onToggleTheme,
+  onJoinChannel,
+  onInviteToChannel,
 }: WorkspaceProps) {
   const [showMembersPanel, setShowMembersPanel] = useState<boolean>(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
@@ -55,6 +59,9 @@ function Workspace({
 
   // Filter users to only include members of this workspace
   const workspaceMembers = users.filter((u) => activeWorkspace?.userIds?.includes(u.id) ?? true);
+
+  // Filter users to only include members of this channel
+  const channelMembers = workspaceMembers.filter((u) => activeChannel?.userIds?.includes(u.id) ?? true);
 
   return (
     <div className="flex-1 flex h-screen bg-slate-950 text-slate-100 overflow-hidden relative">
@@ -83,6 +90,7 @@ function Workspace({
           currentUser={currentUser}
           onGoToDashboard={onGoToDashboard}
           unreadCounts={unreadCounts}
+          onJoinChannel={onJoinChannel}
         />
       </div>
 
@@ -114,6 +122,7 @@ function Workspace({
               currentUser={currentUser}
               onGoToDashboard={onGoToDashboard}
               unreadCounts={unreadCounts}
+              onJoinChannel={onJoinChannel}
             />
           </div>
           {/* Backdrop click to close */}
@@ -145,12 +154,15 @@ function Workspace({
       {showMembersPanel && activeChannel && (
         <div className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col h-full absolute right-0 top-0 bottom-0 z-30 md:static md:z-0 shadow-2xl md:shadow-none animate-[slideInRight_0.2s_ease-out]">
           <MembersList
+            channelId={activeChannel.id}
             channelName={activeChannel.name}
             channelDescription={activeChannel.description}
             isPrivate={activeChannel.isPrivate}
             type={activeChannel.type}
-            users={workspaceMembers}
+            users={channelMembers}
+            allWorkspaceUsers={workspaceMembers}
             onClose={() => setShowMembersPanel(false)}
+            onInviteToChannel={onInviteToChannel}
           />
         </div>
       )}
