@@ -262,6 +262,65 @@ function App() {
     }));
   };
 
+  const handleLeaveWorkspace = (workspaceId: string) => {
+    // Remove user from workspace userIds
+    setWorkspaces(prev => prev.map(ws => {
+      if (ws.id === workspaceId) {
+        const updatedUserIds = ws.userIds ? ws.userIds.filter(id => id !== currentUser.id) : [];
+        return {
+          ...ws,
+          membersCount: updatedUserIds.length,
+          userIds: updatedUserIds
+        };
+      }
+      return ws;
+    }));
+
+    // Remove user from all channels inside this workspace
+    setChannels(prev => prev.map(c => {
+      if (c.workspaceId === workspaceId) {
+        const updatedUserIds = c.userIds ? c.userIds.filter(id => id !== currentUser.id) : [];
+        return { ...c, userIds: updatedUserIds };
+      }
+      return c;
+    }));
+
+    // Return to dashboard
+    setCurrentView('dashboard');
+    setActiveWorkspaceId('');
+    setActiveChannelId('');
+  };
+
+  const handleLeaveChannel = (channelId: string) => {
+    setChannels(prev => {
+      const updated = prev.map(c => {
+        if (c.id === channelId) {
+          const updatedUserIds = c.userIds ? c.userIds.filter(id => id !== currentUser.id) : [];
+          return { ...c, userIds: updatedUserIds };
+        }
+        return c;
+      });
+
+      // Find the next active channel in the same workspace that the user is still a member of
+      const wsChannels = updated.filter(c => c.workspaceId === activeWorkspaceId && (c.userIds?.includes(currentUser.id) ?? false));
+      const generalChannel = wsChannels.find(c => c.name === 'general') || wsChannels[0];
+      if (generalChannel) {
+        setActiveChannelId(generalChannel.id);
+      } else {
+        setActiveChannelId('');
+      }
+
+      return updated;
+    });
+  };
+
+  const handleLogout = () => {
+    // Simulating logout by redirecting to dashboard and resetting state
+    setCurrentView('dashboard');
+    setActiveWorkspaceId('');
+    setActiveChannelId('');
+  };
+
   const handleSendMessage = (content: string) => {
     if (!activeChannelId) return;
     const newMsg: Message = {
@@ -522,6 +581,9 @@ function App() {
           onToggleTheme={toggleTheme}
           onJoinChannel={handleJoinChannel}
           onInviteToChannel={handleInviteToChannel}
+          onLeaveWorkspace={handleLeaveWorkspace}
+          onLeaveChannel={handleLeaveChannel}
+          onLogout={handleLogout}
         />
       )}
     </div>

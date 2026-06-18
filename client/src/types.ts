@@ -4,6 +4,7 @@ export interface User {
   avatar: string; // initials or profile background color code
   status: 'online' | 'offline' | 'away';
   role: 'Admin' | 'Member';
+  email?: string;
 }
 
 export interface MessageReaction {
@@ -22,6 +23,7 @@ export interface Message {
   timestamp: string; // Relative or formatted time e.g., '10:42 AM'
   reactions?: MessageReaction[];
   threadRepliesCount?: number;
+  isPinned?: boolean;
 }
 
 export interface Channel {

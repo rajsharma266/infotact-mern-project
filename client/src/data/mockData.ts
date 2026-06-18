@@ -6,6 +6,7 @@ export const currentUser: User = {
   avatar: 'IS',
   status: 'online',
   role: 'Admin',
+  email: 'info@infotact.com',
 };
 
 export const mockUsers: User[] = [
@@ -15,6 +16,7 @@ export const mockUsers: User[] = [
     avatar: 'AJ',
     status: 'online',
     role: 'Member',
+    email: 'alice.johnson@technova.com',
   },
   {
     id: 'user-bob',
@@ -22,6 +24,7 @@ export const mockUsers: User[] = [
     avatar: 'BS',
     status: 'away',
     role: 'Member',
+    email: 'bob.smith@technova.com',
   },
   {
     id: 'user-charlie',
@@ -29,6 +32,7 @@ export const mockUsers: User[] = [
     avatar: 'CB',
     status: 'offline',
     role: 'Member',
+    email: 'charlie.brown@designstudio.com',
   },
   {
     id: 'user-diana',
@@ -36,6 +40,7 @@ export const mockUsers: User[] = [
     avatar: 'DP',
     status: 'online',
     role: 'Admin',
+    email: 'diana.prince@technova.com',
   },
   {
     id: 'user-evan',
@@ -43,6 +48,7 @@ export const mockUsers: User[] = [
     avatar: 'EW',
     status: 'online',
     role: 'Member',
+    email: 'evan.wright@technova.com',
   },
 ];
 
@@ -197,6 +203,7 @@ export const mockMessages: Message[] = [
       { emoji: '👋', count: 4, users: ['user-infotact', 'user-bob', 'user-diana', 'user-evan'] },
       { emoji: '🎉', count: 2, users: ['user-diana', 'user-evan'] }
     ],
+    isPinned: true,
   },
   {
     id: 'm-tng-2',
@@ -222,6 +229,7 @@ export const mockMessages: Message[] = [
       { emoji: '❤️', count: 2, users: ['user-evan', 'user-infotact'] }
     ],
     threadRepliesCount: 3,
+    isPinned: true,
   },
   {
     id: 'm-tnf-2',

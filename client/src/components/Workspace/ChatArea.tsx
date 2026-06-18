@@ -15,10 +15,15 @@ interface ChatAreaProps {
   typingUsers: string[];
   toggleMembersList: () => void;
   showMembersList: boolean;
+  toggleProfilePanel: () => void;
+  showProfilePanel: boolean;
+  togglePinnedPanel: () => void;
+  showPinnedPanel: boolean;
   toggleMobileSidebar: () => void;
   currentUser: User;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
+  onLeaveChannel?: (channelId: string) => void;
 }
 
 function ChatArea({
@@ -29,10 +34,15 @@ function ChatArea({
   typingUsers,
   toggleMembersList,
   showMembersList,
+  toggleProfilePanel,
+  showProfilePanel,
+  togglePinnedPanel,
+  showPinnedPanel,
   toggleMobileSidebar,
   currentUser,
   theme,
   onToggleTheme,
+  onLeaveChannel,
 }: ChatAreaProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -50,17 +60,24 @@ function ChatArea({
       
       {/* 1. Chat Header */}
       <ChatHeader
+        channelId={activeChannel?.id}
         channelName={activeChannel?.name}
         channelDescription={activeChannel?.description}
         isPrivate={activeChannel?.isPrivate}
         type={activeChannel?.type}
         toggleMembersList={toggleMembersList}
         showMembersList={showMembersList}
+        toggleProfilePanel={toggleProfilePanel}
+        showProfilePanel={showProfilePanel}
+        togglePinnedPanel={togglePinnedPanel}
+        showPinnedPanel={showPinnedPanel}
         toggleMobileSidebar={toggleMobileSidebar}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         theme={theme}
         onToggleTheme={onToggleTheme}
+        currentUser={currentUser}
+        onLeaveChannel={onLeaveChannel}
       />
 
       {/* 2. Chat Contents */}

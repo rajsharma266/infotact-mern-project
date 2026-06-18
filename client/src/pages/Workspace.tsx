@@ -4,6 +4,8 @@ import WorkspaceSidebar from '../components/Workspace/WorkspaceSidebar';
 import ChannelPanel from '../components/Workspace/ChannelPanel';
 import ChatArea from '../components/Workspace/ChatArea';
 import MembersList from '../components/Workspace/MembersList';
+import ProfileDrawer from '../components/Workspace/ProfileDrawer';
+import PinnedPanel from '../components/Workspace/PinnedPanel';
 
 interface WorkspaceProps {
   workspaces: WorkspaceType[];
@@ -26,6 +28,9 @@ interface WorkspaceProps {
   onToggleTheme?: () => void;
   onJoinChannel?: (id: string) => void;
   onInviteToChannel?: (channelId: string, userId: string) => void;
+  onLeaveWorkspace?: (workspaceId: string) => void;
+  onLeaveChannel?: (channelId: string) => void;
+  onLogout?: () => void;
 }
 
 function Workspace({
@@ -49,8 +54,13 @@ function Workspace({
   onToggleTheme,
   onJoinChannel,
   onInviteToChannel,
+  onLeaveWorkspace,
+  onLeaveChannel,
+  onLogout,
 }: WorkspaceProps) {
   const [showMembersPanel, setShowMembersPanel] = useState<boolean>(false);
+  const [showProfilePanel, setShowProfilePanel] = useState<boolean>(false);
+  const [showPinnedPanel, setShowPinnedPanel] = useState<boolean>(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
   // Active items
@@ -62,6 +72,25 @@ function Workspace({
 
   // Filter users to only include members of this channel
   const channelMembers = workspaceMembers.filter((u) => activeChannel?.userIds?.includes(u.id) ?? true);
+
+  // Toggle handlers that ensure only one right-side drawer panel is open at a time
+  const toggleMembersList = () => {
+    setShowMembersPanel(prev => !prev);
+    setShowProfilePanel(false);
+    setShowPinnedPanel(false);
+  };
+
+  const toggleProfilePanel = () => {
+    setShowProfilePanel(prev => !prev);
+    setShowMembersPanel(false);
+    setShowPinnedPanel(false);
+  };
+
+  const togglePinnedPanel = () => {
+    setShowPinnedPanel(prev => !prev);
+    setShowMembersPanel(false);
+    setShowProfilePanel(false);
+  };
 
   return (
     <div className="flex-1 flex h-screen bg-slate-950 text-slate-100 overflow-hidden relative">
@@ -91,6 +120,7 @@ function Workspace({
           onGoToDashboard={onGoToDashboard}
           unreadCounts={unreadCounts}
           onJoinChannel={onJoinChannel}
+          onLeaveWorkspace={onLeaveWorkspace}
         />
       </div>
 
@@ -123,6 +153,7 @@ function Workspace({
               onGoToDashboard={onGoToDashboard}
               unreadCounts={unreadCounts}
               onJoinChannel={onJoinChannel}
+              onLeaveWorkspace={onLeaveWorkspace}
             />
           </div>
           {/* Backdrop click to close */}
@@ -141,8 +172,12 @@ function Workspace({
           onSendMessage={onSendMessage}
           onAddReaction={onAddReaction}
           typingUsers={typingUsers}
-          toggleMembersList={() => setShowMembersPanel(!showMembersPanel)}
+          toggleMembersList={toggleMembersList}
           showMembersList={showMembersPanel}
+          toggleProfilePanel={toggleProfilePanel}
+          showProfilePanel={showProfilePanel}
+          togglePinnedPanel={togglePinnedPanel}
+          showPinnedPanel={showPinnedPanel}
           toggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           currentUser={currentUser}
           theme={theme}
@@ -163,6 +198,28 @@ function Workspace({
             allWorkspaceUsers={workspaceMembers}
             onClose={() => setShowMembersPanel(false)}
             onInviteToChannel={onInviteToChannel}
+          />
+        </div>
+      )}
+
+      {/* PROFILE DRAWER (RIGHT DRAWER) */}
+      {showProfilePanel && (
+        <div className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col h-full absolute right-0 top-0 bottom-0 z-30 md:static md:z-0 shadow-2xl md:shadow-none animate-[slideInRight_0.2s_ease-out]">
+          <ProfileDrawer 
+            user={currentUser}
+            onClose={() => setShowProfilePanel(false)}
+            onLogout={onLogout || (() => {})}
+          />
+        </div>
+      )}
+
+      {/* PINNED MESSAGES DRAWER (RIGHT DRAWER) */}
+      {showPinnedPanel && activeChannel && (
+        <div className="w-80 bg-slate-900 border-l border-slate-800 flex flex-col h-full absolute right-0 top-0 bottom-0 z-30 md:static md:z-0 shadow-2xl md:shadow-none animate-[slideInRight_0.2s_ease-out]">
+          <PinnedPanel 
+            channelName={activeChannel.name}
+            pinnedMessages={messages.filter(m => m.channelId === activeChannel.id && m.isPinned)}
+            onClose={() => setShowPinnedPanel(false)}
           />
         </div>
       )}

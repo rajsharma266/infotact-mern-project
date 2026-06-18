@@ -16,6 +16,7 @@ interface ChannelPanelProps {
   onGoToDashboard: () => void;
   unreadCounts?: Record<string, number>;
   onJoinChannel?: (id: string) => void;
+  onLeaveWorkspace?: (workspaceId: string) => void;
 }
 
 function ChannelPanel({
@@ -31,11 +32,13 @@ function ChannelPanel({
   onGoToDashboard,
   unreadCounts,
   onJoinChannel,
+  onLeaveWorkspace,
 }: ChannelPanelProps) {
   const [micActive, setMicActive] = useState<boolean>(true);
   const [soundActive, setSoundActive] = useState<boolean>(true);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
+  const [showLeaveWsModal, setShowLeaveWsModal] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -92,6 +95,18 @@ function ChannelPanel({
             >
               <LogOut size={14} />
               Exit Workspace
+            </button>
+            <div className="h-[1px] bg-slate-800/80 my-1" />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLeaveWsModal(true);
+                setShowDropdown(false);
+              }}
+              className="w-full px-3 py-2 text-xs font-semibold text-red-400 hover:bg-slate-800/60 flex items-center gap-2 transition cursor-pointer"
+            >
+              <LogOut size={14} />
+              Leave Workspace
             </button>
           </div>
         )}
@@ -235,6 +250,40 @@ function ChannelPanel({
                   Done
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LEAVE WORKSPACE CONFIRMATION MODAL */}
+      {showLeaveWsModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative text-left">
+            <h3 className="text-base font-bold text-white mb-1.5">Leave {workspaceName}</h3>
+            <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+              Are you sure you want to leave this workspace? You will lose access to all its channels and direct messages. You will need a new invitation link to join back.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800/60">
+              <button 
+                type="button"
+                onClick={() => setShowLeaveWsModal(false)}
+                className="px-3.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  if (onLeaveWorkspace) {
+                    onLeaveWorkspace(workspaceId);
+                  }
+                  setShowLeaveWsModal(false);
+                }}
+                className="px-3.5 py-1.5 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white rounded-xl transition cursor-pointer"
+              >
+                Leave
+              </button>
             </div>
           </div>
         </div>
