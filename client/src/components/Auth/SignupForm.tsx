@@ -2,6 +2,7 @@ import { useState } from "react";
 import AuthInput from "./AuthInput";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
+import { Link } from "react-router-dom";
 
 export default function SignupForm() {
     const [password, setPassword] = useState("");
@@ -115,12 +116,12 @@ export default function SignupForm() {
 
       <div className="text-center text-sm text-slate-400">
         Already have an account?
-        <button
-          type="button"
-          className="ml-2 text-violet-400 hover:text-violet-300 font-medium"
-        >
-          Login
-        </button>
+        <Link
+  to="/login"
+  className="ml-2 text-violet-400 hover:text-violet-300 font-medium"
+>
+  Login
+</Link>
       </div>
     </form >
   );

@@ -1,19 +1,18 @@
+import { Link } from "react-router-dom";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
 import AuthInput from "./AuthInput";
 
 
+
 export default function LoginForm() {
   return (
     <form className="space-y-5">
-      {/* Email */}
       <AuthInput
         label="Email"
         type="email"
         placeholder="Enter your email"
       />
-
-      {/* Password */}
       <div>
         <label className="block text-sm text-slate-300 mb-2">
           Password
@@ -22,7 +21,6 @@ export default function LoginForm() {
         <PasswordInput placeholder="Enter your password" />
       </div>
 
-      {/* Remember Me + Forgot Password */}
       <div className="flex items-center justify-between text-sm">
         <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
           <input
@@ -40,7 +38,6 @@ export default function LoginForm() {
         </button>
       </div>
 
-      {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-slate-700"></div>
@@ -52,8 +49,6 @@ export default function LoginForm() {
           </span>
         </div>
       </div>
-
-      {/* Google Login */}
       <button
         type="button"
         className="w-full flex items-center justify-center gap-3 bg-slate-800 border border-slate-700 text-white py-3 rounded-lg hover:bg-slate-700 transition"
@@ -62,7 +57,6 @@ export default function LoginForm() {
         Continue with Google
       </button>
 
-      {/* Login Button */}
       <button
         type="submit"
         className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition"
@@ -70,15 +64,14 @@ export default function LoginForm() {
         Login
       </button>
 
-      {/* Sign Up */}
       <div className="text-center text-sm text-slate-400">
         Don't have an account?
-        <button
-          type="button"
-          className="ml-2 text-violet-400 hover:text-violet-300 font-medium transition"
+        <Link
+          to="/signup"
+          className="ml-2 text-violet-400 hover:text-violet-300 font-medium"
         >
           Sign Up
-        </button>
+        </Link>
       </div>
     </form>
   );
