@@ -1,13 +1,14 @@
 import type { Message, User } from '../../types';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Pin } from 'lucide-react';
 
 interface MessageCardProps {
   message: Message;
   onAddReaction: (messageId: string, emoji: string) => void;
+  onTogglePin: (messageId: string) => void;
   currentUser: User;
 }
 
-function MessageCard({ message, onAddReaction, currentUser }: MessageCardProps) {
+function MessageCard({ message, onAddReaction, onTogglePin, currentUser }: MessageCardProps) {
 
   // Quick picker reactions
   const quickEmojis = ['👍', '❤️', '🔥', '😂', '🎉', '🚀'];
@@ -83,13 +84,18 @@ function MessageCard({ message, onAddReaction, currentUser }: MessageCardProps) 
       <div className="flex-1 flex flex-col text-left min-w-0">
         
         {/* Name and Timestamp Header */}
-        <div className="flex items-baseline gap-2 mb-1 select-none">
+        <div className="flex items-center gap-2 mb-1 select-none">
           <span className="text-xs font-bold text-slate-200 hover:underline cursor-pointer">
             {message.senderName}
           </span>
           <span className="text-[10px] text-slate-500 font-medium">
             {message.timestamp}
           </span>
+          {message.isPinned && (
+            <span className="flex items-center gap-0.5 text-[9px] text-indigo-400 font-semibold bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+              <Pin size={8} className="rotate-45" /> Pinned
+            </span>
+          )}
         </div>
 
         {/* Message Content */}
@@ -147,6 +153,15 @@ function MessageCard({ message, onAddReaction, currentUser }: MessageCardProps) 
         ))}
 
         <div className="w-[1px] h-4 bg-slate-800 mx-1" />
+
+        {/* Pin/Unpin button */}
+        <button 
+          onClick={() => onTogglePin(message.id)}
+          className={`w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-800 cursor-pointer transition ${message.isPinned ? 'text-indigo-400 bg-slate-800/80 hover:text-indigo-300' : 'text-slate-400 hover:text-indigo-400'}`}
+          title={message.isPinned ? "Unpin Message" : "Pin Message"}
+        >
+          <Pin size={13} className={message.isPinned ? "" : "rotate-45"} />
+        </button>
 
         {/* Thread reply button */}
         <button 

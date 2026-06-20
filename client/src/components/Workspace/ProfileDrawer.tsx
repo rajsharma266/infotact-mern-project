@@ -1,4 +1,4 @@
-import { X, LogOut, Check } from 'lucide-react';
+import { X, LogOut } from 'lucide-react';
 import type { User } from '../../types';
 
 interface ProfileDrawerProps {

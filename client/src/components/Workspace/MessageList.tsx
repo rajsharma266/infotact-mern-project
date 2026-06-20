@@ -5,10 +5,11 @@ import MessageCard from './MessageCard';
 interface MessageListProps {
   messages: Message[];
   onAddReaction: (messageId: string, emoji: string) => void;
+  onTogglePin: (messageId: string) => void;
   currentUser: User;
 }
 
-function MessageList({ messages, onAddReaction, currentUser }: MessageListProps) {
+function MessageList({ messages, onAddReaction, onTogglePin, currentUser }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom
@@ -47,6 +48,7 @@ function MessageList({ messages, onAddReaction, currentUser }: MessageListProps)
             key={message.id}
             message={message}
             onAddReaction={onAddReaction}
+            onTogglePin={onTogglePin}
             currentUser={currentUser}
           />
         ))}

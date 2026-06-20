@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Workspace, User } from '../types';
 import { Plus, Users, ArrowRight, LayoutGrid, Activity, Bell, Compass, Sun, Moon } from 'lucide-react';
+import ProfileDrawer from '../components/Workspace/ProfileDrawer';
 
 interface DashboardProps {
   workspaces: Workspace[];
@@ -9,6 +10,8 @@ interface DashboardProps {
   currentUser: User;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
+  onLogout?: () => void;
+  defaultShowCreateModal?: boolean;
 }
 
 function Dashboard({
@@ -18,10 +21,13 @@ function Dashboard({
   currentUser,
   theme,
   onToggleTheme,
+  onLogout,
+  defaultShowCreateModal = false,
 }: DashboardProps) {
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(defaultShowCreateModal);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [showProfileDrawer, setShowProfileDrawer] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +79,11 @@ function Dashboard({
           </button>
 
           {/* User Card */}
-          <div className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800">
+          <div 
+            onClick={() => setShowProfileDrawer(true)}
+            className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800 cursor-pointer hover:bg-slate-900/90 hover:border-indigo-500/40 transition-colors"
+            title="View Profile"
+          >
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center font-bold text-xs text-white">
               {currentUser.avatar}
             </div>
@@ -130,7 +140,7 @@ function Dashboard({
                 <div
                   key={ws.id}
                   onClick={() => onSelectWorkspace(ws.id)}
-                  className="group relative bg-slate-900/40 hover:bg-slate-900/90 backdrop-blur-md p-5 rounded-2xl border border-slate-800/80 hover:border-indigo-500/40 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-indigo-500/5 hover:scale-[1.01] flex flex-col justify-between h-48"
+                  className="group relative bg-slate-900/40 hover:bg-slate-900/90 backdrop-blur-md p-5 rounded-2xl border border-slate-800/80 hover:border-indigo-500/40 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-indigo-500/5 hover:scale-[1.01] flex flex-col justify-between h-52"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -164,7 +174,7 @@ function Dashboard({
               {/* DUMMY NEW WORKSPACE BUTTON IN GRID */}
               <div
                 onClick={() => setShowModal(true)}
-                className="bg-slate-950 hover:bg-slate-900/20 border-2 border-dashed border-slate-800 hover:border-indigo-500/40 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 transition cursor-pointer min-h-48 group"
+                className="bg-slate-950 hover:bg-slate-900/20 border-2 border-dashed border-slate-800 hover:border-indigo-500/40 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3 transition cursor-pointer min-h-52 group"
               >
                 <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center text-slate-400 group-hover:bg-indigo-500/10 group-hover:text-indigo-400 transition">
                   <Plus size={20} />
@@ -290,6 +300,27 @@ function Dashboard({
             </form>
           </div>
         </div>
+      )}
+
+      {/* PROFILE DRAWER (Dashboard View Overlay) */}
+      {showProfileDrawer && (
+        <>
+          {/* Backdrop click to close */}
+          <div 
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] z-40 transition-opacity"
+            onClick={() => setShowProfileDrawer(false)}
+          />
+          <div className="fixed right-0 top-0 bottom-0 z-50 w-80 h-full bg-slate-900 border-l border-slate-800 flex flex-col shadow-2xl animate-[slideInRight_0.2s_ease-out]">
+            <ProfileDrawer 
+              user={currentUser}
+              onClose={() => setShowProfileDrawer(false)}
+              onLogout={() => {
+                setShowProfileDrawer(false);
+                if (onLogout) onLogout();
+              }}
+            />
+          </div>
+        </>
       )}
 
     </div>

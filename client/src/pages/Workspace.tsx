@@ -22,7 +22,7 @@ interface WorkspaceProps {
   users: User[];
   currentUser: User;
   typingUsers: string[];
-  onGoToDashboard: () => void;
+  onGoToDashboard: (openCreate?: boolean) => void;
   unreadCounts?: Record<string, number>;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
@@ -31,6 +31,7 @@ interface WorkspaceProps {
   onLeaveWorkspace?: (workspaceId: string) => void;
   onLeaveChannel?: (channelId: string) => void;
   onLogout?: () => void;
+  onTogglePin: (messageId: string) => void;
 }
 
 function Workspace({
@@ -57,6 +58,7 @@ function Workspace({
   onLeaveWorkspace,
   onLeaveChannel,
   onLogout,
+  onTogglePin,
 }: WorkspaceProps) {
   const [showMembersPanel, setShowMembersPanel] = useState<boolean>(false);
   const [showProfilePanel, setShowProfilePanel] = useState<boolean>(false);
@@ -171,6 +173,7 @@ function Workspace({
           messages={messages}
           onSendMessage={onSendMessage}
           onAddReaction={onAddReaction}
+          onTogglePin={onTogglePin}
           typingUsers={typingUsers}
           toggleMembersList={toggleMembersList}
           showMembersList={showMembersPanel}
@@ -182,6 +185,7 @@ function Workspace({
           currentUser={currentUser}
           theme={theme}
           onToggleTheme={onToggleTheme}
+          onLeaveChannel={onLeaveChannel}
         />
       </div>
 
@@ -220,6 +224,7 @@ function Workspace({
             channelName={activeChannel.name}
             pinnedMessages={messages.filter(m => m.channelId === activeChannel.id && m.isPinned)}
             onClose={() => setShowPinnedPanel(false)}
+            onTogglePin={onTogglePin}
           />
         </div>
       )}

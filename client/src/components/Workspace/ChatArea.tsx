@@ -24,6 +24,7 @@ interface ChatAreaProps {
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
   onLeaveChannel?: (channelId: string) => void;
+  onTogglePin: (messageId: string) => void;
 }
 
 function ChatArea({
@@ -43,6 +44,7 @@ function ChatArea({
   theme,
   onToggleTheme,
   onLeaveChannel,
+  onTogglePin,
 }: ChatAreaProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -103,6 +105,7 @@ function ChatArea({
             <MessageList 
               messages={filteredMessages} 
               onAddReaction={onAddReaction} 
+              onTogglePin={onTogglePin}
               currentUser={currentUser} 
             />
           )}

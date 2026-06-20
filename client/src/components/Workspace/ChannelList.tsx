@@ -23,6 +23,7 @@ function ChannelList({
   users,
   currentUser,
   unreadCounts,
+  onJoinChannel,
 }: ChannelListProps) {
   const [channelsCollapsed, setChannelsCollapsed] = useState(false);
   const [dmsCollapsed, setDmsCollapsed] = useState(false);

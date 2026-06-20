@@ -1,13 +1,14 @@
-import { X, Pin, MessageSquare } from 'lucide-react';
+import { X, Pin } from 'lucide-react';
 import type { Message } from '../../types';
 
 interface PinnedPanelProps {
   channelName: string;
   pinnedMessages: Message[];
   onClose: () => void;
+  onTogglePin?: (messageId: string) => void;
 }
 
-function PinnedPanel({ channelName, pinnedMessages, onClose }: PinnedPanelProps) {
+function PinnedPanel({ channelName, pinnedMessages, onClose, onTogglePin }: PinnedPanelProps) {
   return (
     <div className="flex flex-col h-full bg-slate-900 border-l border-slate-800/80 text-left select-none overflow-hidden select-text animate-[slideInRight_0.2s_ease-out]">
       
@@ -39,7 +40,17 @@ function PinnedPanel({ channelName, pinnedMessages, onClose }: PinnedPanelProps)
               key={msg.id}
               className="p-3.5 bg-slate-950/60 border border-slate-850 rounded-xl relative group hover:border-slate-800 transition"
             >
-              <Pin size={12} className="absolute right-3.5 top-3.5 text-indigo-400/60 rotate-45 select-none" />
+              {onTogglePin ? (
+                <button
+                  onClick={() => onTogglePin(msg.id)}
+                  className="absolute right-3.5 top-3.5 p-1 rounded hover:bg-slate-800 text-indigo-400/60 hover:text-red-400 transition cursor-pointer select-none z-10"
+                  title="Unpin Message"
+                >
+                  <Pin size={12} className="rotate-45" />
+                </button>
+              ) : (
+                <Pin size={12} className="absolute right-3.5 top-3.5 text-indigo-400/60 rotate-45 select-none" />
+              )}
               
               <div className="flex items-start gap-3">
                 {/* Avatar */}

@@ -20,6 +20,7 @@ function App() {
   });
   const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
   const [guestName, setGuestName] = useState<string>('');
+  const [dashboardOpenCreate, setDashboardOpenCreate] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
   });
@@ -110,6 +111,7 @@ function App() {
     // Switch to it
     setActiveWorkspaceId(newId);
     setActiveChannelId(newChan.id);
+    setDashboardOpenCreate(false);
     setCurrentView('workspace');
   };
 
@@ -434,6 +436,12 @@ function App() {
     }));
   };
 
+  const handleTogglePin = (messageId: string) => {
+    setMessages(prev =>
+      prev.map(m => (m.id === messageId ? { ...m, isPinned: !m.isPinned } : m))
+    );
+  };
+
   const targetWorkspace = workspaces.find(w => w.id === pendingInviteId);
   const isAlreadyMember = targetWorkspace?.userIds?.includes(currentUser.id);
 
@@ -558,6 +566,8 @@ function App() {
           currentUser={currentUser}
           theme={theme}
           onToggleTheme={toggleTheme}
+          onLogout={handleLogout}
+          defaultShowCreateModal={dashboardOpenCreate}
         />
       ) : (
         <Workspace 
@@ -572,10 +582,14 @@ function App() {
           messages={messages.filter(m => m.channelId === activeChannelId)}
           onSendMessage={handleSendMessage}
           onAddReaction={handleAddReaction}
+          onTogglePin={handleTogglePin}
           users={users}
           currentUser={currentUser}
           typingUsers={typing}
-          onGoToDashboard={() => setCurrentView('dashboard')}
+          onGoToDashboard={(openCreate) => {
+            setCurrentView('dashboard');
+            setDashboardOpenCreate(openCreate || false);
+          }}
           unreadCounts={unreadCounts}
           theme={theme}
           onToggleTheme={toggleTheme}
