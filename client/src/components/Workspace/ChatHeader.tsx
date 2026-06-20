@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { User } from '../../types';
-import { Hash, Lock, Search, Bell, Menu, Info, X, Sun, Moon, Pin, MoreVertical, LogOut } from 'lucide-react';
+import { Hash, Lock, Search, Menu, Info, X, Sun, Moon, Pin, MoreVertical, LogOut } from 'lucide-react';
 
 interface ChatHeaderProps {
   channelId: string | undefined;
@@ -50,7 +50,7 @@ function ChatHeader({
     return (
       <div className="h-16 border-b border-slate-800/80 px-4 md:px-6 flex items-center justify-between bg-slate-900/40 select-none">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={toggleMobileSidebar}
             className="md:hidden p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer"
           >
@@ -66,12 +66,12 @@ function ChatHeader({
 
   return (
     <div className="h-16 border-b border-slate-800/80 px-4 md:px-6 flex items-center justify-between bg-slate-900/40 select-none z-10 shrink-0">
-      
+
       {/* Left side: Channel details */}
       <div className="flex items-center gap-3 min-w-0">
-        
+
         {/* Mobile Hamburger toggle */}
-        <button 
+        <button
           onClick={toggleMobileSidebar}
           className="md:hidden p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 cursor-pointer transition flex-shrink-0"
           title="Open Side Menu"
@@ -108,16 +108,16 @@ function ChatHeader({
       <div className="flex items-center gap-3">
         {/* Search bar simulation */}
         <div className="relative hidden lg:flex items-center">
-          <input 
-            type="text" 
-            placeholder="Search channel..." 
+          <input
+            type="text"
+            placeholder="Search channel..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-44 bg-slate-950/70 border border-slate-800/80 rounded-lg pl-8 pr-8 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500/60 focus:w-56 transition-all duration-300"
           />
           <Search size={12} className="absolute left-2.5 text-slate-500" />
           {searchQuery && (
-            <button 
+            <button
               onClick={() => setSearchQuery('')}
               className="absolute right-2.5 p-0.5 rounded hover:bg-slate-850 text-slate-400 hover:text-slate-200 cursor-pointer transition"
               title="Clear search"
@@ -127,24 +127,16 @@ function ChatHeader({
           )}
         </div>
 
-        {/* Alert Mute Notification bell (disabled mockup) */}
-        <button 
-          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition cursor-not-allowed hidden sm:block"
-          title="Mute Notifications"
-          disabled
-        >
-          <Bell size={16} />
-        </button>
+
 
         {/* Pinned Messages Panel Toggle */}
         {!isDM && (
-          <button 
+          <button
             onClick={togglePinnedPanel}
-            className={`p-1.5 rounded-lg transition cursor-pointer flex items-center justify-center border ${
-              showPinnedPanel 
-                ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20' 
-                : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-transparent'
-            }`}
+            className={`p-1.5 rounded-lg transition cursor-pointer flex items-center justify-center border ${showPinnedPanel
+              ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20'
+              : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-transparent'
+              }`}
             title="Pinned Messages"
           >
             <Pin size={16} className="rotate-45" />
@@ -152,7 +144,7 @@ function ChatHeader({
         )}
 
         {/* Theme Toggle Button */}
-        <button 
+        <button
           onClick={onToggleTheme}
           className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer"
           title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -161,13 +153,12 @@ function ChatHeader({
         </button>
 
         {/* Info panel toggle */}
-        <button 
+        <button
           onClick={toggleMembersList}
-          className={`p-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 border ${
-            showMembersList 
-              ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20' 
-              : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-transparent'
-          }`}
+          className={`p-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 border ${showMembersList
+            ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20'
+            : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-transparent'
+            }`}
           title="Details & Members"
         >
           <Info size={16} />
@@ -177,13 +168,12 @@ function ChatHeader({
         {/* Settings/More Dropdown Menu (Leave Channel) */}
         {!isDM && (
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-              className={`p-1.5 rounded-lg transition cursor-pointer flex items-center justify-center ${
-                showSettingsDropdown 
-                  ? 'bg-slate-800 text-slate-200' 
-                  : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
+              className={`p-1.5 rounded-lg transition cursor-pointer flex items-center justify-center ${showSettingsDropdown
+                ? 'bg-slate-800 text-slate-200'
+                : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
               title="More Actions"
             >
               <MoreVertical size={16} />
@@ -208,13 +198,12 @@ function ChatHeader({
 
         {/* User profile avatar toggle button */}
         {currentUser && (
-          <button 
+          <button
             onClick={toggleProfilePanel}
-            className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center border transition cursor-pointer shrink-0 ${
-              showProfilePanel 
-                ? 'bg-indigo-500 border-indigo-400 text-white ring-2 ring-indigo-500/30' 
-                : 'bg-slate-850 border-slate-700 text-indigo-300 hover:border-indigo-400 hover:text-indigo-200'
-            }`}
+            className={`w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center border transition cursor-pointer shrink-0 ${showProfilePanel
+              ? 'bg-indigo-500 border-indigo-400 text-white ring-2 ring-indigo-500/30'
+              : 'bg-slate-850 border-slate-700 text-indigo-300 hover:border-indigo-400 hover:text-indigo-200'
+              }`}
             title="My Profile"
           >
             {currentUser.avatar}
@@ -232,14 +221,14 @@ function ChatHeader({
             </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800/60">
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowLeaveModal(false)}
                 className="px-3.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 cursor-pointer"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                   if (channelId && onLeaveChannel) {

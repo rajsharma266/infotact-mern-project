@@ -70,7 +70,7 @@ function Dashboard({
 
         <div className="flex items-center gap-3">
           {/* Theme Toggle Button */}
-          <button 
+          <button
             onClick={onToggleTheme}
             className="p-2.5 bg-slate-900/60 backdrop-blur-md rounded-xl border border-slate-800 text-slate-400 hover:text-slate-200 transition cursor-pointer"
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -79,7 +79,7 @@ function Dashboard({
           </button>
 
           {/* User Card */}
-          <div 
+          <div
             onClick={() => setShowProfileDrawer(true)}
             className="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800 cursor-pointer hover:bg-slate-900/90 hover:border-indigo-500/40 transition-colors"
             title="View Profile"
@@ -107,7 +107,8 @@ function Dashboard({
               Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">{currentUser.name}</span>! 👋
             </h1>
             <p className="text-sm md:text-base text-slate-300 max-w-xl">
-              Connect with your remote development teams. Navigate to an existing workspace or spin up a new stateless backend cluster to start chatting.
+              Streamline collaboration, communication, and workflow management in one powerful SaaS platform.
+              Create, scale, and manage workspaces effortlessly from anywhere.
             </p>
 
             <div className="flex flex-wrap gap-4 mt-6">
@@ -306,12 +307,12 @@ function Dashboard({
       {showProfileDrawer && (
         <>
           {/* Backdrop click to close */}
-          <div 
+          <div
             className="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] z-40 transition-opacity"
             onClick={() => setShowProfileDrawer(false)}
           />
           <div className="fixed right-0 top-0 bottom-0 z-50 w-80 h-full bg-slate-900 border-l border-slate-800 flex flex-col shadow-2xl animate-[slideInRight_0.2s_ease-out]">
-            <ProfileDrawer 
+            <ProfileDrawer
               user={currentUser}
               onClose={() => setShowProfileDrawer(false)}
               onLogout={() => {
