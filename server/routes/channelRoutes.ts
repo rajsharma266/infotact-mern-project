@@ -6,9 +6,11 @@ import {
   updateChannel,
   deleteChannel,
 } from "../controllers/channelController";
+import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
+router.use(authMiddleware);
 router.post("/create", createChannel);
 router.get("/", getAllChannels);
 router.get("/:id", getChannelById);

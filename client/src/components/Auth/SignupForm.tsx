@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import AuthInput from "./AuthInput";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function SignupForm() {
+    const navigate = useNavigate();
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -17,8 +18,18 @@ export default function SignupForm() {
         confirmPassword.length > 0 &&
         password === confirmPassword;
 
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (!passwordsMatch) {
+        return;
+      }
+
+      navigate("/dashboard");
+    };
+
     return (
-    <form className="space-y-5">
+    <form className="space-y-5" onSubmit={handleSubmit}>
       <AuthInput
         label="Full Name"
         type="text"

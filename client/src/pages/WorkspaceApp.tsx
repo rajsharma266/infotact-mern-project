@@ -1,11 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import Workspace from './Workspace';
 import { mockWorkspaces, mockChannels, mockMessages, mockUsers, currentUser } from '../data/mockData';
 import type { Workspace as WorkspaceType, Channel, Message, User } from '../types';
 
-function WorkspaceApp() {
-    const [currentView, setCurrentView] = useState<'dashboard' | 'workspace'>('dashboard');
+interface WorkspaceAppProps {
+    initialView?: 'dashboard' | 'workspace';
+}
+
+function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [currentView, setCurrentView] = useState<'dashboard' | 'workspace'>(() =>
+        location.pathname === '/workspace' ? 'workspace' : initialView
+    );
     const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('ws-technova');
     const [activeChannelId, setActiveChannelId] = useState<string>('ch-tn-frontend');
     const [workspaces, setWorkspaces] = useState<WorkspaceType[]>(mockWorkspaces);
@@ -37,6 +46,25 @@ function WorkspaceApp() {
         localStorage.setItem('theme', theme);
     }, [theme]);
 
+    useEffect(() => {
+        if (location.pathname === '/workspace') {
+            setCurrentView('workspace');
+            return;
+        }
+
+        if (location.pathname === '/dashboard' || location.pathname === '/workspaceapp') {
+            setCurrentView('dashboard');
+        }
+    }, [location.pathname]);
+
+    useEffect(() => {
+        const targetPath = currentView === 'workspace' ? '/workspace' : '/dashboard';
+
+        if (location.pathname !== targetPath) {
+            navigate({ pathname: targetPath, search: location.search }, { replace: true });
+        }
+    }, [currentView, location.pathname, location.search, navigate]);
+
     const toggleTheme = () => {
         setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
     };
@@ -58,14 +86,13 @@ function WorkspaceApp() {
 
     // Parse invite query parameters on startup
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(location.search);
         const joinId = params.get('join');
         if (joinId) {
             setPendingInviteId(joinId);
-            // Clean up browser address bar query params
-            window.history.replaceState({}, document.title, window.location.pathname);
+            navigate(location.pathname, { replace: true });
         }
-    }, []);
+    }, [location.pathname, location.search, navigate]);
 
     // Actions
     const handleSelectWorkspace = (id: string) => {
@@ -317,10 +344,12 @@ function WorkspaceApp() {
     };
 
     const handleLogout = () => {
-        // Simulating logout by redirecting to dashboard and resetting state
         setCurrentView('dashboard');
         setActiveWorkspaceId('');
         setActiveChannelId('');
+        setPendingInviteId(null);
+        setGuestName('');
+        navigate('/login');
     };
 
     const handleSendMessage = (content: string) => {

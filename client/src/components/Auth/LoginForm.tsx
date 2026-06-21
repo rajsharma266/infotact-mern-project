@@ -1,13 +1,19 @@
-import { Link } from "react-router-dom";
+import type { FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
 import AuthInput from "./AuthInput";
 
-
-
 export default function LoginForm() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    navigate("/dashboard");
+  };
+
   return (
-    <form className="space-y-5">
+    <form className="space-y-5" onSubmit={handleSubmit}>
       <AuthInput
         label="Email"
         type="email"

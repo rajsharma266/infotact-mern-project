@@ -1,30 +1,44 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { RequestHandler } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
-export const authMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+type DecodedToken = JwtPayload & {
+  id: string;
+  role?: string;
+};
+
+export const authMiddleware: RequestHandler = (req, res, next) => {
   try {
-    const token = req.header("Authorization");
+    const authHeader = req.header("Authorization");
 
-    if (!token) {
+    if (!authHeader) {
       return res.status(401).json({
         success: false,
         message: "Access Denied. No Token Provided",
       });
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    );
+    const jwtSecret = process.env.JWT_SECRET;
 
-    console.log(decoded);
+    if (!jwtSecret) {
+      return res.status(500).json({
+        success: false,
+        message: "JWT_SECRET is not configured",
+      });
+    }
+
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7).trim()
+      : authHeader.trim();
+
+    const decoded = jwt.verify(token, jwtSecret) as DecodedToken;
+
+    req.user = {
+      id: decoded.id,
+      role: decoded.role,
+    };
 
     next();
-  } catch (error: any) {
+  } catch {
     return res.status(401).json({
       success: false,
       message: "Invalid Token",

@@ -3,34 +3,71 @@ import User from "../models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-export const createUser = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const userData = req.body;
-    console.log("BODY:", req.body);
+const serializeUser = (user: { toObject: () => Record<string, unknown> }) => {
+  const { password, ...safeUser } = user.toObject();
+  return safeUser;
+};
 
-    const createUser = await User.create(userData);
+const getJwtSecret = () => {
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    throw new Error("JWT_SECRET is not configured");
+  }
+
+  return jwtSecret;
+};
+
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const { name, email, password, role, avatar } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "name, email and password are required",
+      });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existingUser = await User.findOne({ email: normalizedEmail });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(String(password), 10);
+
+    const createdUser = await User.create({
+      name,
+      email: normalizedEmail,
+      password: hashedPassword,
+      role,
+      avatar,
+    });
 
     res.status(201).json({
       success: true,
       message: "User created successfully",
-      data: createUser,
+      data: serializeUser(createdUser),
     });
   } catch (error: any) {
-  console.log("Create user error:", error);
+    console.log("Create user error:", error);
 
-  res.status(500).json({
-    success: false,
-    message: "Server Error",
-    error: error.message,
-  });
-}}
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await User.find();
+    const users = await User.find().select("-password");
 
     res.status(200).json({
       success: true,
@@ -48,7 +85,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 
 export const getUserById = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -73,9 +110,20 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const updates = { ...req.body };
+
+    if (updates.email) {
+      updates.email = String(updates.email).trim().toLowerCase();
+    }
+
+    if (updates.password) {
+      updates.password = await bcrypt.hash(String(updates.password), 10);
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, updates, {
       new: true,
-    });
+      runValidators: true,
+    }).select("-password");
 
     if (!user) {
       return res.status(404).json({
@@ -127,7 +175,15 @@ export const registerUser = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "name, email and password are required",
+      });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(400).json({
@@ -140,14 +196,14 @@ export const registerUser = async (req: Request, res: Response) => {
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
     });
 
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-      data: user,
+      data: serializeUser(user),
     });
   } catch (error: any) {
     res.status(500).json({
@@ -162,7 +218,15 @@ export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "email and password are required",
+      });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(404).json({
@@ -182,7 +246,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      process.env.JWT_SECRET as string,
+      getJwtSecret(),
       { expiresIn: "7d" }
     );
 
@@ -190,7 +254,7 @@ export const loginUser = async (req: Request, res: Response) => {
       success: true,
       message: "Login successful",
       token,
-      data: user,
+      data: serializeUser(user),
     });
   } catch (error: any) {
     res.status(500).json({

@@ -1,12 +1,20 @@
 import mongoose from "mongoose";
 
 const dbConnect = async (): Promise<void> => {
+  const mongoUrl = process.env.MONGO_URL;
+
+  if (!mongoUrl) {
+    throw new Error("MONGO_URL is not set. Update server/.env before starting the API.");
+  }
+
   try {
-    await mongoose.connect(process.env.MONGO_URL as string);
+    await mongoose.connect(mongoUrl, {
+      serverSelectionTimeoutMS: 5000,
+    });
     console.log("DB connected successfully");
   } catch (error) {
-    console.log("error in db");
-    console.log(error);
+    console.error("Failed to connect to MongoDB");
+    throw error;
   }
 };
 

@@ -1,13 +1,13 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "main": "src/server.ts",
+  "name": "infotact-mern-project",
+  "private": true,
   "scripts": {
-    "dev": "nodemon src/server.ts"
-  },
-  "dependencies": {
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "nodemon": "^3.1.14"
+    "client:install": "npm --prefix client install",
+    "client:dev": "npm --prefix client run dev",
+    "client:build": "npm --prefix client run build",
+    "server:install": "npm --prefix server install",
+    "server:dev": "npm --prefix server run dev",
+    "server:build": "npm --prefix server run build",
+    "install:all": "npm run client:install && npm run server:install"
   }
 }

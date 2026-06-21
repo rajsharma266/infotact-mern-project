@@ -9,7 +9,19 @@ function App() {
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/workspaceapp" element={<WorkspaceApp />} />
+      <Route
+        path="/dashboard"
+        element={<WorkspaceApp initialView="dashboard" />}
+      />
+      <Route
+        path="/workspace"
+        element={<WorkspaceApp initialView="workspace" />}
+      />
+      <Route
+        path="/workspaceapp"
+        element={<WorkspaceApp initialView="dashboard" />}
+      />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
