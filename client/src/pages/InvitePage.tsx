@@ -1,19 +1,56 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 function InvitePage() {
   const navigate = useNavigate();
+  const { token } = useParams();
 
-  // Later these values will come from backend
-  const workspace = {
-    name: "TechNova Workspace",
-    owner: { name: "Raj Kumar" },
-    members: [1, 2, 3, 4, 5, 6, 7, 8],
-  };
+  const [workspace, setWorkspace] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchInviteDetails = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:4000/api/workspaces/invite/${token}`
+        );
+
+        setWorkspace(res.data.data);
+      } catch (err: any) {
+        setError(
+          err.response?.data?.message || "Failed to load invite details"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchInviteDetails();
+    }
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+        Loading invite...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-red-400">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
-
+      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
         <h1 className="text-2xl font-bold text-white text-center mb-6">
           Workspace Invitation
         </h1>
@@ -22,30 +59,32 @@ function InvitePage() {
           You have been invited to join:
         </p>
 
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3">
-          <h2 className="text-xl font-bold text-indigo-400 text-center">
-            {workspace.name}
+        <div className="bg-black border border-slate-800 rounded-xl p-6">
+          <h2 className="text-xl font-bold text-indigo-400 text-center mb-4">
+            {workspace?.name}
           </h2>
 
-          <p className="text-sm text-slate-300 text-center">
-            Owner: {workspace.owner.name}
-          </p>
+          <div className="space-y-3">
+            <p className="text-slate-300 text-center">
+              <span className="font-semibold text-white">Owner:</span>{" "}
+              {workspace?.owner?.name}
+            </p>
 
-          <p className="text-sm text-slate-300 text-center">
-            Members: {workspace.members.length}
-          </p>
+            <p className="text-slate-300 text-center">
+              <span className="font-semibold text-white">Members:</span>{" "}
+              {workspace?.members?.length}
+            </p>
+          </div>
         </div>
 
         <div className="flex gap-3 mt-6">
-          <button
-            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-xl font-semibold transition"
-          >
+          <button className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition cursor-pointer">
             Join Workspace
           </button>
 
           <button
             onClick={() => navigate("/")}
-            className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded-xl font-semibold transition"
+            className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition cursor-pointer"
           >
             Cancel
           </button>
