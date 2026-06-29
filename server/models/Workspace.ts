@@ -5,6 +5,8 @@ export interface IWorkspace extends Document {
   description?: string;
   owner: mongoose.Types.ObjectId;
   members: mongoose.Types.ObjectId[];
+  inviteToken?: string;
+  inviteExpiresAt?: Date;
 }
 
 const workspaceSchema = new mongoose.Schema<IWorkspace>(
@@ -31,7 +33,17 @@ const workspaceSchema = new mongoose.Schema<IWorkspace>(
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
+      
     ],
+    inviteToken: {
+    type: String,
+    default: null,
+    },
+
+    inviteExpiresAt: {
+    type: Date,
+    default: null,
+    },
   },
   { timestamps: true }
 );

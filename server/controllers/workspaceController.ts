@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Workspace from "../models/Workspace";
 import User from "../models/User";
+import crypto from "crypto";
 
 const workspacePopulateOptions = [
   { path: "owner", select: "name email role avatar" },
@@ -198,6 +199,51 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Workspace deleted successfully",
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+export const generateInviteLink = async (req: Request, res: Response) => {
+  try {
+    const workspaceId = String(req.params.id);
+
+    if (!mongoose.Types.ObjectId.isValid(workspaceId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid workspace id",
+      });
+    }
+
+    const workspace = await Workspace.findById(workspaceId);
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Workspace not found",
+      });
+    }
+
+    // Generate random token
+    const token = crypto.randomBytes(16).toString("hex");
+
+    // Save token in DB
+    workspace.inviteToken = token;
+    workspace.inviteExpiresAt = new Date(
+      Date.now() + 24 * 60 * 60 * 1000
+    ); // expires in 24 hours
+
+    await workspace.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Invite link generated successfully",
+      inviteLink: `http://localhost:5173/invite/${token}`,
     });
   } catch (error: any) {
     res.status(500).json({

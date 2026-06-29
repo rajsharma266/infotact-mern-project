@@ -5,6 +5,7 @@ import {
   getWorkspaceById,
   updateWorkspace,
   deleteWorkspace,
+  generateInviteLink,
 } from "../controllers/workspaceController";
 import { authMiddleware } from "../middleware/authMiddleware";
 
@@ -16,5 +17,6 @@ router.get("/", getAllWorkspaces);
 router.get("/:id", getWorkspaceById);
 router.put("/:id", updateWorkspace);
 router.delete("/:id", deleteWorkspace);
+router.post("/:id/invite", generateInviteLink);
 
 export default router;
