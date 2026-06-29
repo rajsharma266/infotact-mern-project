@@ -6,6 +6,8 @@ import {
   updateWorkspace,
   deleteWorkspace,
   generateInviteLink,
+  validateInviteLink,
+  joinWorkspaceByInvite,
 } from "../controllers/workspaceController";
 import { authMiddleware } from "../middleware/authMiddleware";
 
@@ -14,9 +16,14 @@ const router = express.Router();
 router.use(authMiddleware);
 router.post("/create", createWorkspace);
 router.get("/", getAllWorkspaces);
+router.get("/invite/:token", validateInviteLink);
+router.post("/join", joinWorkspaceByInvite);
+router.post("/:id/invite", generateInviteLink);
 router.get("/:id", getWorkspaceById);
 router.put("/:id", updateWorkspace);
 router.delete("/:id", deleteWorkspace);
-router.post("/:id/invite", generateInviteLink);
+
+
+
 
 export default router;

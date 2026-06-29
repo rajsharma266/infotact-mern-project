@@ -253,3 +253,109 @@ export const generateInviteLink = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const validateInviteLink = async (req: Request, res: Response) => {
+  try {
+    const token = String(req.params.token);
+
+    const workspace = await Workspace.findOne({
+      inviteToken: token,
+    }).populate(workspacePopulateOptions);
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid invite link",
+      });
+    }
+
+    if (
+      workspace.inviteExpiresAt &&
+      new Date(workspace.inviteExpiresAt) < new Date()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invite link expired",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Invite link is valid",
+      data: workspace,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+export const joinWorkspaceByInvite = async (req: Request, res: Response) => {
+  try {
+    const { token, userId } = req.body;
+
+    if (!token || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "token and userId are required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user id",
+      });
+    }
+
+    const workspace = await Workspace.findOne({
+      inviteToken: token,
+    });
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid invite link",
+      });
+    }
+
+    if (
+      workspace.inviteExpiresAt &&
+      new Date(workspace.inviteExpiresAt) < new Date()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invite link expired",
+      });
+    }
+
+    const alreadyMember = workspace.members.some(
+      (member) => member.toString() === userId
+    );
+
+    if (alreadyMember) {
+      return res.status(400).json({
+        success: false,
+        message: "User already joined workspace",
+      });
+    }
+
+    workspace.members.push(new mongoose.Types.ObjectId(userId));
+    await workspace.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Joined workspace successfully",
+      data: workspace,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
