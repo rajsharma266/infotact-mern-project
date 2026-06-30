@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import Workspace from './Workspace';
-import { mockWorkspaces, mockChannels, mockMessages, mockUsers, currentUser } from '../data/mockData';
+import { mockWorkspaces, mockChannels, mockMessages, mockUsers, currentUser as mockCurrentUser } from '../data/mockData';
 import type { Workspace as WorkspaceType, Channel, Message, User } from '../types';
 
 interface WorkspaceAppProps {
@@ -33,6 +33,49 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
     });
+    const [currentUser] = useState<User>(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                const parsed = JSON.parse(storedUser);
+                return {
+                    id: parsed._id || parsed.id || 'user-infotact',
+                    name: parsed.name || 'Infotact Solution',
+                    avatar: parsed.avatar || (parsed.name ? parsed.name.slice(0, 2).toUpperCase() : 'IS'),
+                    status: parsed.status || 'online',
+                    role: (parsed.role === 'admin' || parsed.role === 'Admin') ? 'Admin' : 'Member',
+                    email: parsed.email || 'info@infotact.com'
+                };
+            } catch (e) {
+                // fallback
+            }
+        }
+        return mockCurrentUser;
+    });
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+        }
+    }, [navigate]);
+
+    useEffect(() => {
+        if (currentUser && currentUser.id !== 'user-infotact') {
+            setUsers(prev => {
+                if (prev.some(u => u.id === currentUser.id)) return prev;
+                return [...prev, currentUser];
+            });
+            setWorkspaces(prev => prev.map(ws => ({
+                ...ws,
+                userIds: ws.userIds ? [...new Set([...ws.userIds, currentUser.id])] : [currentUser.id]
+            })));
+            setChannels(prev => prev.map(ch => ({
+                ...ch,
+                userIds: ch.userIds ? [...new Set([...ch.userIds, currentUser.id])] : [currentUser.id]
+            })));
+        }
+    }, [currentUser]);
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -344,6 +387,8 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
     };
 
     const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setCurrentView('dashboard');
         setActiveWorkspaceId('');
         setActiveChannelId('');

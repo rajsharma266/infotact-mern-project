@@ -13,10 +13,12 @@ import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
+
+router.get("/invite/:token", validateInviteLink);
 router.use(authMiddleware);
 router.post("/create", createWorkspace);
 router.get("/", getAllWorkspaces);
-router.get("/invite/:token", validateInviteLink);
+
 router.post("/join", joinWorkspaceByInvite);
 router.post("/:id/invite", generateInviteLink);
 router.get("/:id", getWorkspaceById);

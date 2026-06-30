@@ -47,7 +47,36 @@ function InvitePage() {
       </div>
     );
   }
+  const handleJoin = async () => {
+  const authToken = localStorage.getItem("token");
 
+  // User not logged in
+  if (!authToken) {
+    localStorage.setItem("pendingInviteToken", token || "");
+    navigate("/login");
+    return;
+  }
+
+  try {
+    const res = await axios.post(
+      "http://localhost:4000/api/workspaces/join",
+      {
+        token,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      }
+    );
+
+    alert(res.data.message);
+
+    navigate("/dashboard");
+  } catch (err: any) {
+    alert(err.response?.data?.message || "Failed to join workspace");
+  }
+};
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
@@ -78,7 +107,10 @@ function InvitePage() {
         </div>
 
         <div className="flex gap-3 mt-6">
-          <button className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition cursor-pointer">
+          <button
+            onClick={handleJoin}
+            className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition cursor-pointer"
+          >
             Join Workspace
           </button>
 
