@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Workspace from "../models/Workspace";
 import User from "../models/User";
+import Channel from "../models/Channel";
 import crypto from "crypto";
 
 const workspacePopulateOptions = [
@@ -50,6 +51,17 @@ export const createWorkspace = async (req: Request, res: Response) => {
       name,
       description,
       owner,
+      members: normalizedMembers,
+    });
+
+    // Automatically create a general channel for the workspace
+    await Channel.create({
+      name: "general",
+      description: "General discussion",
+      workspaceId: workspace._id,
+      createdBy: owner,
+      isPrivate: false,
+      type: "channel",
       members: normalizedMembers,
     });
 

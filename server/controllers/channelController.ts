@@ -11,7 +11,7 @@ const channelPopulateOptions = [
 
 export const createChannel = async (req: Request, res: Response) => {
   try {
-    const { name, description, workspaceId, createdBy } = req.body;
+    const { name, description, workspaceId, createdBy, isPrivate, type, recipientId, members } = req.body;
 
     if (!name || !workspaceId || !createdBy) {
       return res.status(400).json({
@@ -48,11 +48,19 @@ export const createChannel = async (req: Request, res: Response) => {
       });
     }
 
+    // Set up members array - default to the creator
+    const memberIds = Array.isArray(members) ? members : [createdBy];
+    const normalizedMembers = Array.from(new Set([createdBy, ...memberIds]));
+
     const channel = await Channel.create({
       name,
-      description,
+      description: description || "",
       workspaceId,
       createdBy,
+      isPrivate: isPrivate ?? false,
+      type: type || "channel",
+      recipientId: recipientId || null,
+      members: normalizedMembers,
     });
 
     const populatedChannel = await Channel.findById(channel._id).populate(
@@ -75,7 +83,14 @@ export const createChannel = async (req: Request, res: Response) => {
 
 export const getAllChannels = async (req: Request, res: Response) => {
   try {
-    const channels = await Channel.find().populate(channelPopulateOptions);
+    const { workspaceId } = req.query;
+    const filter: any = {};
+
+    if (workspaceId && mongoose.Types.ObjectId.isValid(String(workspaceId))) {
+      filter.workspaceId = workspaceId;
+    }
+
+    const channels = await Channel.find(filter).populate(channelPopulateOptions);
 
     res.status(200).json({
       success: true,

@@ -1,10 +1,19 @@
 import mongoose, { Document } from "mongoose";
 
+export interface IMessageReaction {
+  emoji: string;
+  count: number;
+  users: mongoose.Types.ObjectId[];
+}
+
 export interface IMessage extends Document {
   content: string;
   sender: mongoose.Types.ObjectId;
   channelId: mongoose.Types.ObjectId;
   attachments: string[];
+  reactions: IMessageReaction[];
+  isPinned: boolean;
+  threadRepliesCount: number;
 }
 
 const messageSchema = new mongoose.Schema<IMessage>(
@@ -27,6 +36,21 @@ const messageSchema = new mongoose.Schema<IMessage>(
     attachments: {
       type: [String],
       default: [],
+    },
+    reactions: [
+      {
+        emoji: { type: String, required: true },
+        count: { type: Number, default: 1 },
+        users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      },
+    ],
+    isPinned: {
+      type: Boolean,
+      default: false,
+    },
+    threadRepliesCount: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

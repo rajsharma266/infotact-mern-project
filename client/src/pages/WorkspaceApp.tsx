@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import Workspace from './Workspace';
-import { mockWorkspaces, mockChannels, mockMessages, mockUsers, currentUser as mockCurrentUser } from '../data/mockData';
+import { currentUser as mockCurrentUser } from '../data/mockData';
 import type { Workspace as WorkspaceType, Channel, Message, User } from '../types';
+import { authService, workspaceService, channelService, messageService } from '../services/api';
+import { useSocket } from '../contexts/SocketContext';
 
 interface WorkspaceAppProps {
     initialView?: 'dashboard' | 'workspace';
@@ -15,18 +17,14 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
     const [currentView, setCurrentView] = useState<'dashboard' | 'workspace'>(() =>
         location.pathname === '/workspace' ? 'workspace' : initialView
     );
-    const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('ws-technova');
-    const [activeChannelId, setActiveChannelId] = useState<string>('ch-tn-frontend');
-    const [workspaces, setWorkspaces] = useState<WorkspaceType[]>(mockWorkspaces);
-    const [channels, setChannels] = useState<Channel[]>(mockChannels);
-    const [messages, setMessages] = useState<Message[]>(mockMessages);
-    const [users, setUsers] = useState<User[]>(mockUsers);
+    const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>('');
+    const [activeChannelId, setActiveChannelId] = useState<string>('');
+    const [workspaces, setWorkspaces] = useState<WorkspaceType[]>([]);
+    const [channels, setChannels] = useState<Channel[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [typing, setTyping] = useState<string[]>([]);
-    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
-        'ch-tn-general': 2,
-        'ch-tn-backend': 5,
-        'dm-tn-bob': 1,
-    });
+    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
     const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
     const [guestName, setGuestName] = useState<string>('');
     const [dashboardOpenCreate, setDashboardOpenCreate] = useState(false);
@@ -53,6 +51,8 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         return mockCurrentUser;
     });
 
+    const { joinChannel, leaveChannel, startTyping, stopTyping, socket } = useSocket();
+
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -60,23 +60,225 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         }
     }, [navigate]);
 
+    // Load users
     useEffect(() => {
-        if (currentUser && currentUser.id !== 'user-infotact') {
-            setUsers(prev => {
-                if (prev.some(u => u.id === currentUser.id)) return prev;
-                return [...prev, currentUser];
-            });
-            setWorkspaces(prev => prev.map(ws => ({
-                ...ws,
-                userIds: ws.userIds ? [...new Set([...ws.userIds, currentUser.id])] : [currentUser.id]
-            })));
-            setChannels(prev => prev.map(ch => ({
-                ...ch,
-                userIds: ch.userIds ? [...new Set([...ch.userIds, currentUser.id])] : [currentUser.id]
-            })));
-        }
-    }, [currentUser]);
+        const fetchUsers = async () => {
+            try {
+                const u = await authService.getAllUsers();
+                const mappedUsers = u.map((user: any) => ({
+                    id: user._id,
+                    name: user.name,
+                    avatar: user.avatar || user.name.slice(0, 2).toUpperCase(),
+                    status: "online",
+                    role: user.role === "admin" ? "Admin" : "Member",
+                    email: user.email,
+                }));
+                setUsers(mappedUsers);
+            } catch (err) {
+                console.error("Failed to load users", err);
+            }
+        };
+        fetchUsers();
+    }, []);
 
+    // Load workspaces
+    useEffect(() => {
+        const fetchWorkspaces = async () => {
+            try {
+                const ws = await workspaceService.getAll();
+                const mappedWorkspaces = ws.map((w: any) => ({
+                    id: w._id,
+                    name: w.name,
+                    description: w.description || "",
+                    logo: w.name.split(' ').map((word: string) => word[0]).join('').toUpperCase().slice(0, 2) || "WS",
+                    membersCount: w.members?.length || 0,
+                    userIds: w.members?.map((m: any) => m._id || m) || [],
+                }));
+                setWorkspaces(mappedWorkspaces);
+                
+                if (mappedWorkspaces.length > 0) {
+                    if (!activeWorkspaceId || !mappedWorkspaces.some((w: any) => w.id === activeWorkspaceId)) {
+                        setActiveWorkspaceId(mappedWorkspaces[0].id);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load workspaces", err);
+            }
+        };
+        fetchWorkspaces();
+    }, [currentUser, activeWorkspaceId]);
+
+    // Load channels of the active workspace
+    useEffect(() => {
+        if (!activeWorkspaceId) return;
+        const fetchChannels = async () => {
+            try {
+                const chs = await channelService.getAll(activeWorkspaceId);
+                const mappedChannels = chs.map((c: any) => ({
+                    id: c._id,
+                    workspaceId: c.workspaceId?._id || c.workspaceId,
+                    name: c.name,
+                    description: c.description || "",
+                    isPrivate: c.isPrivate || false,
+                    type: c.type || "channel",
+                    recipientId: c.recipientId?._id || c.recipientId || undefined,
+                    userIds: c.members?.map((m: any) => m._id || m) || [],
+                }));
+                setChannels(mappedChannels);
+
+                if (mappedChannels.length > 0) {
+                    const hasActive = mappedChannels.some((c: any) => c.id === activeChannelId);
+                    if (!hasActive) {
+                        setActiveChannelId(mappedChannels[0].id);
+                    }
+                } else {
+                    setActiveChannelId("");
+                }
+            } catch (err) {
+                console.error("Failed to load channels", err);
+            }
+        };
+        fetchChannels();
+    }, [activeWorkspaceId, activeChannelId]);
+
+    // Load messages of active channel
+    useEffect(() => {
+        if (!activeChannelId) {
+            setMessages([]);
+            return;
+        }
+        const fetchMessages = async () => {
+            try {
+                const msgs = await messageService.getByChannel(activeChannelId);
+                const mappedMessages = msgs.map((m: any) => ({
+                    id: m._id,
+                    channelId: m.channelId?._id || m.channelId,
+                    senderId: m.sender?._id || m.sender,
+                    senderName: m.sender?.name || "Unknown",
+                    senderAvatar: m.sender?.avatar || m.sender?.name?.slice(0, 2).toUpperCase() || "U",
+                    content: m.content,
+                    timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ", " + new Date(m.createdAt).toLocaleDateString([], { month: "short", day: "numeric" }),
+                    reactions: m.reactions?.map((r: any) => ({
+                        emoji: r.emoji,
+                        count: r.count,
+                        users: r.users?.map((u: any) => u._id || u) || [],
+                    })) || [],
+                    isPinned: m.isPinned || false,
+                    threadRepliesCount: m.threadRepliesCount || 0,
+                }));
+                setMessages(mappedMessages);
+            } catch (err) {
+                console.error("Failed to load messages", err);
+            }
+        };
+        fetchMessages();
+    }, [activeChannelId]);
+
+    // Join/Leave Channel Room via WebSocket
+    useEffect(() => {
+        if (activeChannelId) {
+            joinChannel(activeChannelId);
+            return () => {
+                leaveChannel(activeChannelId);
+            };
+        }
+    }, [activeChannelId]);
+
+    // Listen to real-time events
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewMessage = (payload: { channelId: string; message: any }) => {
+            if (payload.channelId === activeChannelId) {
+                const m = payload.message;
+                const newMsg = {
+                    id: m._id,
+                    channelId: m.channelId?._id || m.channelId,
+                    senderId: m.sender?._id || m.sender,
+                    senderName: m.sender?.name || "Unknown",
+                    senderAvatar: m.sender?.avatar || m.sender?.name?.slice(0, 2).toUpperCase() || "U",
+                    content: m.content,
+                    timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ", " + new Date(m.createdAt).toLocaleDateString([], { month: "short", day: "numeric" }),
+                    reactions: m.reactions?.map((r: any) => ({
+                        emoji: r.emoji,
+                        count: r.count,
+                        users: r.users?.map((u: any) => u._id || u) || [],
+                    })) || [],
+                    isPinned: m.isPinned || false,
+                    threadRepliesCount: m.threadRepliesCount || 0,
+                };
+                setMessages((prev) => {
+                    if (prev.some((msg) => msg.id === newMsg.id)) return prev;
+                    return [...prev, newMsg];
+                });
+            } else {
+                setUnreadCounts((prev) => ({
+                    ...prev,
+                    [payload.channelId]: (prev[payload.channelId] || 0) + 1,
+                }));
+            }
+        };
+
+        const handleDeletedMessage = (payload: { channelId: string; messageId: string }) => {
+            if (payload.channelId === activeChannelId) {
+                setMessages((prev) => prev.filter((msg) => msg.id !== payload.messageId));
+            }
+        };
+
+        const handleUpdatedMessage = (message: any) => {
+            const chanId = message.channelId?._id || message.channelId;
+            if (chanId === activeChannelId) {
+                const updatedMsg = {
+                    id: message._id,
+                    channelId: chanId,
+                    senderId: message.sender?._id || message.sender,
+                    senderName: message.sender?.name || "Unknown",
+                    senderAvatar: message.sender?.avatar || message.sender?.name?.slice(0, 2).toUpperCase() || "U",
+                    content: message.content,
+                    timestamp: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ", " + new Date(message.createdAt).toLocaleDateString([], { month: "short", day: "numeric" }),
+                    reactions: message.reactions?.map((r: any) => ({
+                        emoji: r.emoji,
+                        count: r.count,
+                        users: r.users?.map((u: any) => u._id || u) || [],
+                    })) || [],
+                    isPinned: message.isPinned || false,
+                    threadRepliesCount: message.threadRepliesCount || 0,
+                };
+                setMessages((prev) => prev.map((msg) => (msg.id === updatedMsg.id ? updatedMsg : msg)));
+            }
+        };
+
+        const handleTypingStart = ({ channelId, userName }: { channelId: string; userName: string }) => {
+            if (channelId === activeChannelId) {
+                setTyping((prev) => {
+                    if (prev.includes(userName)) return prev;
+                    return [...prev, userName];
+                });
+            }
+        };
+
+        const handleTypingStop = ({ channelId, userName }: { channelId: string; userName: string }) => {
+            if (channelId === activeChannelId) {
+                setTyping((prev) => prev.filter((name) => name !== userName));
+            }
+        };
+
+        socket.on("message:created", handleNewMessage);
+        socket.on("message:deleted", handleDeletedMessage);
+        socket.on("message:updated", handleUpdatedMessage);
+        socket.on("typing:start", handleTypingStart);
+        socket.on("typing:stop", handleTypingStop);
+
+        return () => {
+            socket.off("message:created", handleNewMessage);
+            socket.off("message:deleted", handleDeletedMessage);
+            socket.off("message:updated", handleUpdatedMessage);
+            socket.off("typing:start", handleTypingStart);
+            socket.off("typing:stop", handleTypingStop);
+        };
+    }, [socket, activeChannelId]);
+
+    // Handle theme toggle
     useEffect(() => {
         const root = window.document.documentElement;
         if (theme === 'dark') {
@@ -89,12 +291,12 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         localStorage.setItem('theme', theme);
     }, [theme]);
 
+    // Handle view location sync
     useEffect(() => {
         if (location.pathname === '/workspace') {
             setCurrentView('workspace');
             return;
         }
-
         if (location.pathname === '/dashboard' || location.pathname === '/workspaceapp') {
             setCurrentView('dashboard');
         }
@@ -102,7 +304,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
 
     useEffect(() => {
         const targetPath = currentView === 'workspace' ? '/workspace' : '/dashboard';
-
         if (location.pathname !== targetPath) {
             navigate({ pathname: targetPath, search: location.search }, { replace: true });
         }
@@ -113,7 +314,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
     };
 
     const activeChannelIdRef = useRef(activeChannelId);
-
     useEffect(() => {
         activeChannelIdRef.current = activeChannelId;
         if (activeChannelId) {
@@ -140,7 +340,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
     // Actions
     const handleSelectWorkspace = (id: string) => {
         setActiveWorkspaceId(id);
-        // Find first channel in that workspace
         const wsChannels = channels.filter(c => c.workspaceId === id);
         if (wsChannels.length > 0) {
             setActiveChannelId(wsChannels[0].id);
@@ -154,35 +353,26 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         setActiveChannelId(id);
     };
 
-    const handleCreateWorkspace = (name: string, description: string) => {
-        const newId = `ws-${Date.now()}`;
-        const newWs: WorkspaceType = {
-            id: newId,
-            name,
-            description,
-            logo: name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'WS',
-            membersCount: 1,
-            userIds: [currentUser.id],
-        };
-        setWorkspaces([...workspaces, newWs]);
+    const handleCreateWorkspace = async (name: string, description: string) => {
+        try {
+            const newWs = await workspaceService.create(name, description, currentUser.id);
+            const mappedWs: WorkspaceType = {
+                id: newWs._id,
+                name: newWs.name,
+                description: newWs.description || "",
+                logo: newWs.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) || "WS",
+                membersCount: newWs.members?.length || 0,
+                userIds: newWs.members?.map((m: any) => m._id || m) || [],
+            };
+            setWorkspaces(prev => [...prev, mappedWs]);
 
-        // Automatically create a general channel for the new workspace
-        const newChan: Channel = {
-            id: `ch-${Date.now()}-general`,
-            workspaceId: newId,
-            name: 'general',
-            description: 'General discussion',
-            isPrivate: false,
-            type: 'channel',
-            userIds: [currentUser.id],
-        };
-        setChannels(prev => [...prev, newChan]);
-
-        // Switch to it
-        setActiveWorkspaceId(newId);
-        setActiveChannelId(newChan.id);
-        setDashboardOpenCreate(false);
-        setCurrentView('workspace');
+            // Set active workspace (automatically selects general channel created on the backend)
+            setActiveWorkspaceId(mappedWs.id);
+            setDashboardOpenCreate(false);
+            setCurrentView('workspace');
+        } catch (err) {
+            console.error("Failed to create workspace", err);
+        }
     };
 
     const handleAcceptInvite = (workspaceId: string, nameToJoin: string, existingUserId?: string) => {
@@ -191,7 +381,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         let targetUserId = existingUserId;
 
         if (!targetUserId) {
-            // Generate initials for guest user avatar
             const initials = nameToJoin
                 .split(' ')
                 .map(w => w[0])
@@ -208,13 +397,11 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
                 role: 'Member',
             };
 
-            // Add guest to the global users list
             setUsers(prev => [...prev, newGuestUser]);
         }
 
         const finalUserId = targetUserId;
 
-        // Update target workspace member count and user list
         setWorkspaces(prevWorkspaces =>
             prevWorkspaces.map(ws => {
                 if (ws.id === workspaceId) {
@@ -232,7 +419,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             })
         );
 
-        // Also update general channel of the workspace to include this user
         setChannels(prevChannels =>
             prevChannels.map(c => {
                 if (c.workspaceId === workspaceId && c.name === 'general') {
@@ -249,7 +435,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             })
         );
 
-        // Navigate to new workspace general channel
         setActiveWorkspaceId(workspaceId);
         const wsChannels = channels.filter(c => c.workspaceId === workspaceId);
         const generalChannel = wsChannels.find(c => c.name === 'general') || wsChannels[0];
@@ -265,26 +450,38 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         setGuestName('');
     };
 
-    const handleCreateChannel = (name: string, description: string, isPrivate: boolean) => {
-        const formattedName = name.toLowerCase().replace(/\s+/g, '-');
-        const newChan: Channel = {
-            id: `ch-${Date.now()}`,
-            workspaceId: activeWorkspaceId,
-            name: formattedName,
-            description,
-            isPrivate,
-            type: 'channel',
-            userIds: [currentUser.id],
-        };
-        setChannels(prev => [...prev, newChan]);
-        setActiveChannelId(newChan.id);
+    const handleCreateChannel = async (name: string, description: string, isPrivate: boolean) => {
+        try {
+            const formattedName = name.toLowerCase().replace(/\s+/g, '-');
+            const newChan = await channelService.create({
+                name: formattedName,
+                description,
+                workspaceId: activeWorkspaceId,
+                createdBy: currentUser.id,
+                isPrivate,
+                type: "channel",
+                members: [currentUser.id]
+            });
+            const mappedChan: Channel = {
+                id: newChan._id,
+                workspaceId: newChan.workspaceId?._id || newChan.workspaceId,
+                name: newChan.name,
+                description: newChan.description || "",
+                isPrivate: newChan.isPrivate || false,
+                type: newChan.type || "channel",
+                userIds: newChan.members?.map((m: any) => m._id || m) || [],
+            };
+            setChannels(prev => [...prev, mappedChan]);
+            setActiveChannelId(mappedChan.id);
+        } catch (err) {
+            console.error("Failed to create channel", err);
+        }
     };
 
-    const handleCreateDM = (recipientId: string) => {
+    const handleCreateDM = async (recipientId: string) => {
         const recipient = users.find(u => u.id === recipientId);
         if (!recipient) return;
 
-        // Check if DM already exists in this workspace
         const existing = channels.find(
             c => c.workspaceId === activeWorkspaceId && c.type === 'dm' && c.recipientId === recipientId
         );
@@ -293,18 +490,32 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             return;
         }
 
-        const newChan: Channel = {
-            id: `dm-${Date.now()}`,
-            workspaceId: activeWorkspaceId,
-            name: recipient.name,
-            description: `Direct message with ${recipient.name}`,
-            isPrivate: true,
-            type: 'dm',
-            recipientId,
-            userIds: [currentUser.id, recipientId],
-        };
-        setChannels(prev => [...prev, newChan]);
-        setActiveChannelId(newChan.id);
+        try {
+            const newChan = await channelService.create({
+                name: recipient.name,
+                description: `Direct message with ${recipient.name}`,
+                workspaceId: activeWorkspaceId,
+                createdBy: currentUser.id,
+                isPrivate: true,
+                type: "dm",
+                recipientId,
+                members: [currentUser.id, recipientId]
+            });
+            const mappedChan: Channel = {
+                id: newChan._id,
+                workspaceId: newChan.workspaceId?._id || newChan.workspaceId,
+                name: newChan.name,
+                description: newChan.description || "",
+                isPrivate: newChan.isPrivate || false,
+                type: newChan.type || "dm",
+                recipientId: newChan.recipientId?._id || newChan.recipientId || undefined,
+                userIds: newChan.members?.map((m: any) => m._id || m) || [],
+            };
+            setChannels(prev => [...prev, mappedChan]);
+            setActiveChannelId(mappedChan.id);
+        } catch (err) {
+            console.error("Failed to create DM channel", err);
+        }
     };
 
     const handleJoinChannel = (channelId: string) => {
@@ -335,7 +546,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
     };
 
     const handleLeaveWorkspace = (workspaceId: string) => {
-        // Remove user from workspace userIds
         setWorkspaces(prev => prev.map(ws => {
             if (ws.id === workspaceId) {
                 const updatedUserIds = ws.userIds ? ws.userIds.filter(id => id !== currentUser.id) : [];
@@ -348,7 +558,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             return ws;
         }));
 
-        // Remove user from all channels inside this workspace
         setChannels(prev => prev.map(c => {
             if (c.workspaceId === workspaceId) {
                 const updatedUserIds = c.userIds ? c.userIds.filter(id => id !== currentUser.id) : [];
@@ -357,7 +566,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             return c;
         }));
 
-        // Return to dashboard
         setCurrentView('dashboard');
         setActiveWorkspaceId('');
         setActiveChannelId('');
@@ -373,7 +581,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
                 return c;
             });
 
-            // Find the next active channel in the same workspace that the user is still a member of
             const wsChannels = updated.filter(c => c.workspaceId === activeWorkspaceId && (c.userIds?.includes(currentUser.id) ?? false));
             const generalChannel = wsChannels.find(c => c.name === 'general') || wsChannels[0];
             if (generalChannel) {
@@ -397,123 +604,33 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         navigate('/login');
     };
 
-    const handleSendMessage = (content: string) => {
+    const handleSendMessage = async (content: string) => {
         if (!activeChannelId) return;
-        const newMsg: Message = {
-            id: `m-${Date.now()}`,
-            channelId: activeChannelId,
-            senderId: currentUser.id,
-            senderName: currentUser.name,
-            senderAvatar: currentUser.avatar,
-            content,
-            timestamp: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages(prev => [...prev, newMsg]);
-
-        // Simulate typing indicator and response from bot/recipient
-        const currentChan = channels.find(c => c.id === activeChannelId);
-        if (currentChan) {
-            let respondentName = '';
-            let respondentAvatar = '';
-            let respondentId = '';
-            if (currentChan.type === 'dm') {
-                const otherUser = users.find(u => u.id === currentChan.recipientId);
-                if (otherUser) {
-                    respondentName = otherUser.name;
-                    respondentAvatar = otherUser.avatar;
-                    respondentId = otherUser.id;
-                }
-            } else {
-                // Pick a random member from mock users
-                const randUser = users[Math.floor(Math.random() * users.length)];
-                respondentName = randUser.name;
-                respondentAvatar = randUser.avatar;
-                respondentId = randUser.id;
-            }
-
-            if (respondentName) {
-                // Trigger simulated typing event in 800ms
-                setTimeout(() => {
-                    setTyping(prev => {
-                        if (prev.includes(respondentName)) return prev;
-                        return [...prev, respondentName];
-                    });
-
-                    // Reply in 2.5 seconds
-                    setTimeout(() => {
-                        setTyping(prev => prev.filter(name => name !== respondentName));
-
-                        const replyMsg: Message = {
-                            id: `m-reply-${Date.now()}`,
-                            channelId: activeChannelId,
-                            senderId: respondentId,
-                            senderName: respondentName,
-                            senderAvatar: respondentAvatar,
-                            content: getSimulatedResponse(content, currentChan.name),
-                            timestamp: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                            reactions: []
-                        };
-                        setMessages(prev => [...prev, replyMsg]);
-
-                        if (activeChannelIdRef.current !== replyMsg.channelId) {
-                            setUnreadCounts(prev => ({
-                                ...prev,
-                                [replyMsg.channelId]: (prev[replyMsg.channelId] || 0) + 1,
-                            }));
-                        }
-                    }, 2000);
-                }, 800);
-            }
+        try {
+            await messageService.send({
+                content,
+                sender: currentUser.id,
+                channelId: activeChannelId,
+            });
+        } catch (err) {
+            console.error("Failed to send message", err);
         }
     };
 
-    const handleAddReaction = (messageId: string, emoji: string) => {
-        setMessages(prev => prev.map(msg => {
-            if (msg.id !== messageId) return msg;
-
-            const reactions = msg.reactions ? [...msg.reactions] : [];
-            const reactIndex = reactions.findIndex(r => r.emoji === emoji);
-
-            if (reactIndex > -1) {
-                const reaction = reactions[reactIndex];
-                const userIndex = reaction.users.indexOf(currentUser.id);
-                if (userIndex > -1) {
-                    // Remove reaction if user already reacted
-                    const newUsers = reaction.users.filter(u => u !== currentUser.id);
-                    if (newUsers.length === 0) {
-                        reactions.splice(reactIndex, 1);
-                    } else {
-                        reactions[reactIndex] = {
-                            ...reaction,
-                            count: reaction.count - 1,
-                            users: newUsers,
-                        };
-                    }
-                } else {
-                    // Add user to reaction
-                    reactions[reactIndex] = {
-                        ...reaction,
-                        count: reaction.count + 1,
-                        users: [...reaction.users, currentUser.id],
-                    };
-                }
-            } else {
-                // Create new reaction
-                reactions.push({
-                    emoji,
-                    count: 1,
-                    users: [currentUser.id],
-                });
-            }
-
-            return { ...msg, reactions };
-        }));
+    const handleAddReaction = async (messageId: string, emoji: string) => {
+        try {
+            await messageService.react(messageId, emoji, currentUser.id);
+        } catch (err) {
+            console.error("Failed to add reaction", err);
+        }
     };
 
-    const handleTogglePin = (messageId: string) => {
-        setMessages(prev =>
-            prev.map(m => (m.id === messageId ? { ...m, isPinned: !m.isPinned } : m))
-        );
+    const handleTogglePin = async (messageId: string) => {
+        try {
+            await messageService.togglePin(messageId);
+        } catch (err) {
+            console.error("Failed to toggle pin", err);
+        }
     };
 
     const targetWorkspace = workspaces.find(w => w.id === pendingInviteId);
