@@ -47,12 +47,19 @@ function InvitePage() {
       </div>
     );
   }
-  const handleJoin = async () => {
+const handleJoin = async () => {
   const authToken = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   // User not logged in
   if (!authToken) {
     localStorage.setItem("pendingInviteToken", token || "");
+    navigate("/login");
+    return;
+  }
+
+  if (!user._id) {
+    alert("User information missing. Please login again.");
     navigate("/login");
     return;
   }
@@ -62,6 +69,7 @@ function InvitePage() {
       "http://localhost:4000/api/workspaces/join",
       {
         token,
+        userId: user._id,
       },
       {
         headers: {
@@ -71,7 +79,6 @@ function InvitePage() {
     );
 
     alert(res.data.message);
-
     navigate("/dashboard");
   } catch (err: any) {
     alert(err.response?.data?.message || "Failed to join workspace");

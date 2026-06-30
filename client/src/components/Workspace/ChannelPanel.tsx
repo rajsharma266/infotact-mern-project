@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Channel, User } from '../../types';
 import ChannelList from './ChannelList';
 import { Mic, MicOff, Headphones, LogOut, ChevronDown, Search, UserPlus, Copy, Check } from 'lucide-react';
+import axios from 'axios';
 
 interface ChannelPanelProps {
   workspaceId: string;
@@ -40,6 +41,7 @@ function ChannelPanel({
   const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
   const [showLeaveWsModal, setShowLeaveWsModal] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [inviteLink, setInviteLink] = useState("");
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredChannels = channels.filter(channel => {
@@ -51,6 +53,29 @@ function ChannelPanel({
     }
     return false;
   });
+
+const handleInvite = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.post(
+      `http://localhost:4000/api/workspaces/${workspaceId}/invite`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setInviteLink(res.data.inviteLink);
+    setShowInviteModal(true);
+    setShowDropdown(false);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to generate invite link");
+  }
+};
 
   return (
     <div className="w-64 bg-slate-900 border-r border-slate-800/80 flex flex-col h-full select-none">
@@ -76,10 +101,9 @@ function ChannelPanel({
           <div className="absolute top-16 left-4 right-4 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl py-1.5 z-50 animate-[fadeIn_0.15s_ease-out] text-left">
             <button
               onClick={(e) => {
-                e.stopPropagation();
-                setShowInviteModal(true);
-                setShowDropdown(false);
-              }}
+              e.stopPropagation();
+              handleInvite();
+}}
               className="w-full px-3 py-2 text-xs font-semibold text-indigo-400 hover:bg-slate-800/60 flex items-center gap-2 transition cursor-pointer"
             >
               <UserPlus size={14} />
@@ -219,12 +243,12 @@ function ChannelPanel({
                   <input 
                     type="text"
                     readOnly
-                    value={`${window.location.origin}/?join=${workspaceId}`}
+                    value={inviteLink}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition select-all"
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/?join=${workspaceId}`);
+                      navigator.clipboard.writeText(inviteLink);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
