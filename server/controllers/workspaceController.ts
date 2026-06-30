@@ -358,6 +358,12 @@ export const joinWorkspaceByInvite = async (req: Request, res: Response) => {
     workspace.members.push(new mongoose.Types.ObjectId(userId));
     await workspace.save();
 
+    // Automatically add the user to the general channel of the joined workspace
+    await Channel.findOneAndUpdate(
+      { workspaceId: workspace._id, name: "general" },
+      { $addToSet: { members: new mongoose.Types.ObjectId(userId) } }
+    );
+
     res.status(200).json({
       success: true,
       message: "Joined workspace successfully",
