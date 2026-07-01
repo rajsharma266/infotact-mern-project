@@ -93,7 +93,11 @@ export const createWorkspace = async (req: Request, res: Response) => {
 
 export const getAllWorkspaces = async (req: Request, res: Response) => {
   try {
-    const workspaces = await Workspace.find().populate(workspacePopulateOptions);
+    const userId = req.user?.id;
+
+    const workspaces = await Workspace.find({
+      members: userId,
+    }).populate(workspacePopulateOptions);
 
     res.status(200).json({
       success: true,
