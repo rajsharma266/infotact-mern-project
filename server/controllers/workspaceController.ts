@@ -4,6 +4,7 @@ import Workspace from "../models/Workspace";
 import User from "../models/User";
 import Channel from "../models/Channel";
 import crypto from "crypto";
+import Activity from "../models/Activity";
 
 const workspacePopulateOptions = [
   { path: "owner", select: "name email role avatar" },
@@ -64,6 +65,13 @@ export const createWorkspace = async (req: Request, res: Response) => {
       type: "channel",
       members: normalizedMembers,
     });
+
+    await Activity.create({
+    user: owner,
+    workspace: workspace._id,
+    action: "WORKSPACE_CREATED",
+    details: `created workspace ${workspace.name}`,
+   });
 
     const populatedWorkspace = await Workspace.findById(workspace._id).populate(
       workspacePopulateOptions
@@ -363,6 +371,13 @@ export const joinWorkspaceByInvite = async (req: Request, res: Response) => {
       { workspaceId: workspace._id, name: "general" },
       { $addToSet: { members: new mongoose.Types.ObjectId(userId) } }
     );
+
+    await Activity.create({
+  user: userId,
+  workspace: workspace._id,
+  action: "USER_JOINED",
+  details: `joined workspace ${workspace.name}`,
+});
 
     res.status(200).json({
       success: true,

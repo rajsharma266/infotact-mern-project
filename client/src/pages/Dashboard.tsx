@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import axios from "axios";
 import type { Workspace, User } from '../types';
 import { Plus, Users, ArrowRight, LayoutGrid, Activity, Bell, Compass, Sun, Moon } from 'lucide-react';
 import ProfileDrawer from '../components/Workspace/ProfileDrawer';
 
 interface DashboardProps {
   workspaces: Workspace[];
+  activeWorkspaceId: string;
   onSelectWorkspace: (id: string) => void;
   onCreateWorkspace: (name: string, description: string) => void;
   currentUser: User;
@@ -16,6 +18,7 @@ interface DashboardProps {
 
 function Dashboard({
   workspaces,
+  activeWorkspaceId,
   onSelectWorkspace,
   onCreateWorkspace,
   currentUser,
@@ -38,12 +41,34 @@ function Dashboard({
     setShowModal(false);
   };
 
-  // Mock global activity feed
-  const recentActivities = [
-    { id: 1, user: 'Alice Johnson', workspace: 'TechNova', action: 'created channel #frontend', time: '10m ago' },
-    { id: 2, user: 'Bob Smith', workspace: 'TechNova', action: 'posted in #backend', time: '25m ago' },
-    { id: 3, user: 'Diana Prince', workspace: 'DesignStudio', action: 'added you to #figma-library', time: '2h ago' }
-  ];
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  useEffect(() => {
+  const fetchActivities = async () => {
+    if (workspaces.length === 0) return;
+
+    try {
+      const workspaceId = activeWorkspaceId;
+
+      const res = await axios.get(
+        `http://localhost:4000/api/activities/${workspaceId}`
+      );
+
+      const mappedActivities = res.data.data.map((act: any) => ({
+        id: act._id,
+        user: act.user?.name || "Unknown",
+        workspace: act.workspace?.name || "Workspace",
+        action: act.details,
+        time: new Date(act.createdAt).toLocaleString(),
+      }));
+
+      setRecentActivities(mappedActivities);
+    } catch (error) {
+      console.error("Failed to load activities", error);
+    }
+  };
+
+  fetchActivities();
+}, [workspaces]);
 
   return (
     <div className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-10 text-slate-100 flex flex-col relative select-none">

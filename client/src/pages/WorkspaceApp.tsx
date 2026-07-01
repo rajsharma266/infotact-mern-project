@@ -752,6 +752,7 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             ) : currentView === 'dashboard' ? (
                 <Dashboard
                     workspaces={workspaces}
+                    activeWorkspaceId={activeWorkspaceId}
                     onSelectWorkspace={handleSelectWorkspace}
                     onCreateWorkspace={handleCreateWorkspace}
                     currentUser={currentUser}

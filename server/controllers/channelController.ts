@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Channel from "../models/Channel";
 import Workspace from "../models/Workspace";
 import User from "../models/User";
+import Activity from "../models/Activity";
 
 const channelPopulateOptions = [
   { path: "workspaceId", select: "name description owner members" },
@@ -61,6 +62,13 @@ export const createChannel = async (req: Request, res: Response) => {
       type: type || "channel",
       recipientId: recipientId || null,
       members: normalizedMembers,
+    });
+
+    await Activity.create({
+      user: createdBy,
+      workspace: workspaceId,
+      action: "CHANNEL_CREATED",
+      details: `created channel ${channel.name}`,
     });
 
     const populatedChannel = await Channel.findById(channel._id).populate(

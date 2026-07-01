@@ -4,6 +4,7 @@ import userRoutes from "./routes/authRoute";
 import workspaceRoutes from "./routes/workspaceRoutes";
 import channelRoutes from "./routes/channelRoutes";
 import messageRoutes from "./routes/messageRoutes";
+import activityRoutes from "./routes/activityRoutes";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/workspaces", workspaceRoutes);
 app.use("/api/channels", channelRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/activities", activityRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({
