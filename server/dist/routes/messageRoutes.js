@@ -11,4 +11,6 @@ router.use(authMiddleware_1.authMiddleware);
 router.post("/send", messageController_1.sendMessage);
 router.get("/channel/:channelId", messageController_1.getMessagesByChannel);
 router.delete("/:id", messageController_1.deleteMessage);
+router.put("/:id/pin", messageController_1.togglePinMessage);
+router.post("/:id/react", messageController_1.reactToMessage);
 exports.default = router;

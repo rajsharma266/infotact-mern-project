@@ -43,32 +43,33 @@ function Dashboard({
 
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   useEffect(() => {
-  const fetchActivities = async () => {
-    if (workspaces.length === 0) return;
+    const fetchActivities = async () => {
+      if (workspaces.length === 0) return;
 
-    try {
-      const workspaceId = activeWorkspaceId;
+      const workspaceId = activeWorkspaceId || workspaces[0].id;
+      if (!workspaceId) return;
 
-      const res = await axios.get(
-        `http://localhost:4000/api/activities/${workspaceId}`
-      );
+      try {
+        const res = await axios.get(
+          `http://localhost:4000/api/activities/${workspaceId}`
+        );
 
-      const mappedActivities = res.data.data.map((act: any) => ({
-        id: act._id,
-        user: act.user?.name || "Unknown",
-        workspace: act.workspace?.name || "Workspace",
-        action: act.details,
-        time: new Date(act.createdAt).toLocaleString(),
-      }));
+        const mappedActivities = res.data.data.map((act: any) => ({
+          id: act._id,
+          user: act.user?.name || "Unknown",
+          workspace: act.workspace?.name || "Workspace",
+          action: act.details,
+          time: new Date(act.createdAt).toLocaleString(),
+        }));
 
-      setRecentActivities(mappedActivities);
-    } catch (error) {
-      console.error("Failed to load activities", error);
-    }
-  };
+        setRecentActivities(mappedActivities);
+      } catch (error) {
+        console.error("Failed to load activities", error);
+      }
+    };
 
-  fetchActivities();
-}, [workspaces]);
+    fetchActivities();
+  }, [workspaces, activeWorkspaceId]);
 
   return (
     <div className="flex-1 overflow-y-auto bg-slate-950 p-6 md:p-10 text-slate-100 flex flex-col relative select-none">

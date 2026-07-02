@@ -9,6 +9,7 @@ const authRoute_1 = __importDefault(require("./routes/authRoute"));
 const workspaceRoutes_1 = __importDefault(require("./routes/workspaceRoutes"));
 const channelRoutes_1 = __importDefault(require("./routes/channelRoutes"));
 const messageRoutes_1 = __importDefault(require("./routes/messageRoutes"));
+const activityRoutes_1 = __importDefault(require("./routes/activityRoutes"));
 const app = (0, express_1.default)();
 app.disable("x-powered-by");
 app.use((0, cors_1.default)());
@@ -18,6 +19,7 @@ app.use("/api/users", authRoute_1.default);
 app.use("/api/workspaces", workspaceRoutes_1.default);
 app.use("/api/channels", channelRoutes_1.default);
 app.use("/api/messages", messageRoutes_1.default);
+app.use("/api/activities", activityRoutes_1.default);
 app.get("/api/health", (_req, res) => {
     res.status(200).json({
         success: true,

@@ -25,6 +25,26 @@ const channelSchema = new mongoose_1.default.Schema({
         ref: "User",
         required: true,
     },
+    isPrivate: {
+        type: Boolean,
+        default: false,
+    },
+    type: {
+        type: String,
+        enum: ["channel", "dm"],
+        default: "channel",
+    },
+    recipientId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "User",
+        default: null,
+    },
+    members: [
+        {
+            type: mongoose_1.default.Schema.Types.ObjectId,
+            ref: "User",
+        },
+    ],
 }, { timestamps: true });
 const Channel = mongoose_1.default.model("Channel", channelSchema);
 exports.default = Channel;

@@ -12,6 +12,8 @@ interface MembersListProps {
   allWorkspaceUsers: User[];
   onClose: () => void;
   onInviteToChannel?: (channelId: string, userId: string) => void;
+  createdAt?: string;
+  createdBy?: any;
 }
 
 function MembersList({
@@ -24,11 +26,28 @@ function MembersList({
   allWorkspaceUsers,
   onClose,
   onInviteToChannel,
+  createdAt,
+  createdBy,
 }: MembersListProps) {
   const [search, setSearch] = useState('');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   const isDM = type === 'dm';
+
+  // Extract creator name dynamically
+  const getCreatorName = () => {
+    if (!createdBy) return 'System';
+    if (typeof createdBy === 'object') {
+      return createdBy.name || createdBy.email || 'System';
+    }
+    const matchedUser = allWorkspaceUsers.find(u => u.id === createdBy);
+    return matchedUser ? matchedUser.name : 'System';
+  };
+
+  const creatorName = getCreatorName();
+  const formattedDate = createdAt
+    ? new Date(createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+    : 'Unknown';
 
   // Filter members based on search
   const filteredUsers = users.filter(user =>
@@ -87,8 +106,8 @@ function MembersList({
           </div>
 
           <div className="pt-2 border-t border-slate-850 text-[10px] text-slate-500 font-semibold space-y-1">
-            <div>Created: June 13, 2026</div>
-            <div>Creator: system-admin</div>
+            <div>Created: {formattedDate}</div>
+            <div>Creator: {creatorName}</div>
           </div>
         </div>
 

@@ -24,6 +24,21 @@ const messageSchema = new mongoose_1.default.Schema({
         type: [String],
         default: [],
     },
+    reactions: [
+        {
+            emoji: { type: String, required: true },
+            count: { type: Number, default: 1 },
+            users: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
+        },
+    ],
+    isPinned: {
+        type: Boolean,
+        default: false,
+    },
+    threadRepliesCount: {
+        type: Number,
+        default: 0,
+    },
 }, { timestamps: true });
 const Message = mongoose_1.default.model("Message", messageSchema);
 exports.default = Message;

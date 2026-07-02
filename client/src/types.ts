@@ -35,6 +35,8 @@ export interface Channel {
   type: 'channel' | 'dm';
   recipientId?: string; // If it's a DM, who is the recipient
   userIds?: string[];
+  createdAt?: string;
+  createdBy?: any;
 }
 
 export interface Workspace {

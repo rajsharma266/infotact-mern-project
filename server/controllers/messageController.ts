@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Message from "../models/Message";
 import User from "../models/User";
 import Channel from "../models/Channel";
+import Workspace from "../models/Workspace";
 import { MESSAGE_SOCKET_EVENTS, getChannelRoom } from "../socket/messageEvents";
 
 const messagePopulateOptions = [
@@ -20,6 +21,7 @@ const messagePopulateOptions = [
 export const sendMessage = async (req: Request, res: Response) => {
   try {
     const { content, sender, channelId, attachments } = req.body;
+    const userId = req.user?.id || sender;
 
     if (!content || !sender || !channelId) {
       return res.status(400).json({
@@ -63,6 +65,47 @@ export const sendMessage = async (req: Request, res: Response) => {
       });
     }
 
+    // Verify channel access
+    if (channel.isPrivate || channel.type === "dm") {
+      const isMember = channel.members?.some(
+        (mId) => mId.toString() === userId
+      );
+      if (!isMember) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have access to this private channel",
+        });
+      }
+    } else {
+      // For public channels, check workspace membership
+      const workspace = await Workspace.findById(channel.workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+      const isWorkspaceMember = workspace.members.some(
+        (mId) => mId.toString() === userId
+      );
+      if (!isWorkspaceMember && workspace.owner.toString() !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not a member of this workspace",
+        });
+      }
+
+      // Add user to channel members array if not already present
+      const isChannelMember = channel.members?.some(
+        (mId) => mId.toString() === userId
+      );
+      if (!isChannelMember) {
+        channel.members = channel.members || [];
+        channel.members.push(new mongoose.Types.ObjectId(userId));
+        await channel.save();
+      }
+    }
+
     const message = await Message.create({
       content,
       sender,
@@ -100,6 +143,14 @@ export const sendMessage = async (req: Request, res: Response) => {
 export const getMessagesByChannel = async (req: Request, res: Response) => {
   try {
     const channelId = String(req.params.channelId);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(channelId)) {
       return res.status(400).json({
@@ -115,6 +166,37 @@ export const getMessagesByChannel = async (req: Request, res: Response) => {
         success: false,
         message: "Channel not found",
       });
+    }
+
+    // Verify channel access
+    if (channel.isPrivate || channel.type === "dm") {
+      const isMember = channel.members?.some(
+        (mId) => mId.toString() === userId
+      );
+      if (!isMember) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have access to this private channel",
+        });
+      }
+    } else {
+      // For public channels, check workspace membership
+      const workspace = await Workspace.findById(channel.workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+      const isWorkspaceMember = workspace.members.some(
+        (mId) => mId.toString() === userId
+      );
+      if (!isWorkspaceMember && workspace.owner.toString() !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not a member of this workspace",
+        });
+      }
     }
 
     const messages = await Message.find({ channelId })

@@ -92,11 +92,45 @@ export const createChannel = async (req: Request, res: Response) => {
 export const getAllChannels = async (req: Request, res: Response) => {
   try {
     const { workspaceId } = req.query;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
     const filter: any = {};
 
     if (workspaceId && mongoose.Types.ObjectId.isValid(String(workspaceId))) {
       filter.workspaceId = workspaceId;
+
+      // Verify user is a member of the workspace
+      const workspace = await Workspace.findById(workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+      const isWorkspaceMember = workspace.members.some(
+        (mId) => mId.toString() === userId
+      );
+      if (!isWorkspaceMember && workspace.owner.toString() !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not a member of this workspace",
+        });
+      }
     }
+
+    // Access policy: user can see public channels (isPrivate is false and type is "channel")
+    // or private/dm channels they are a member of.
+    filter.$or = [
+      { isPrivate: false, type: "channel" },
+      { members: userId }
+    ];
 
     const channels = await Channel.find(filter).populate(channelPopulateOptions);
 
@@ -117,6 +151,14 @@ export const getAllChannels = async (req: Request, res: Response) => {
 export const getChannelById = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -132,6 +174,37 @@ export const getChannelById = async (req: Request, res: Response) => {
         success: false,
         message: "Channel not found",
       });
+    }
+
+    // Check visibility/access permissions
+    if (channel.isPrivate || channel.type === "dm") {
+      const isMember = channel.members?.some(
+        (mId) => mId.toString() === userId
+      );
+      if (!isMember) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have access to this private channel",
+        });
+      }
+    } else {
+      // For public channels, check workspace membership
+      const workspace = await Workspace.findById(channel.workspaceId);
+      if (!workspace) {
+        return res.status(404).json({
+          success: false,
+          message: "Workspace not found",
+        });
+      }
+      const isWorkspaceMember = workspace.members.some(
+        (mId) => mId.toString() === userId
+      );
+      if (!isWorkspaceMember && workspace.owner.toString() !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not a member of this workspace",
+        });
+      }
     }
 
     res.status(200).json({

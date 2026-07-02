@@ -202,6 +202,8 @@ function Workspace({
             allWorkspaceUsers={workspaceMembers}
             onClose={() => setShowMembersPanel(false)}
             onInviteToChannel={onInviteToChannel}
+            createdAt={activeChannel.createdAt}
+            createdBy={activeChannel.createdBy}
           />
         </div>
       )}

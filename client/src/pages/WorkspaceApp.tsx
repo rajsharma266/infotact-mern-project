@@ -51,7 +51,7 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         return mockCurrentUser;
     });
 
-    const { joinChannel, leaveChannel, startTyping, stopTyping, socket } = useSocket();
+    const { joinChannel, leaveChannel, socket } = useSocket();
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -123,6 +123,8 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
                     type: c.type || "channel",
                     recipientId: c.recipientId?._id || c.recipientId || undefined,
                     userIds: c.members?.map((m: any) => m._id || m) || [],
+                    createdAt: c.createdAt,
+                    createdBy: c.createdBy,
                 }));
                 setChannels(mappedChannels);
 
@@ -470,6 +472,8 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
                 isPrivate: newChan.isPrivate || false,
                 type: newChan.type || "channel",
                 userIds: newChan.members?.map((m: any) => m._id || m) || [],
+                createdAt: newChan.createdAt,
+                createdBy: newChan.createdBy,
             };
             setChannels(prev => [...prev, mappedChan]);
             setActiveChannelId(mappedChan.id);
@@ -510,6 +514,8 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
                 type: newChan.type || "dm",
                 recipientId: newChan.recipientId?._id || newChan.recipientId || undefined,
                 userIds: newChan.members?.map((m: any) => m._id || m) || [],
+                createdAt: newChan.createdAt,
+                createdBy: newChan.createdBy,
             };
             setChannels(prev => [...prev, mappedChan]);
             setActiveChannelId(mappedChan.id);
@@ -518,31 +524,47 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         }
     };
 
-    const handleJoinChannel = (channelId: string) => {
-        setChannels(prev => prev.map(c => {
-            if (c.id === channelId) {
-                const updatedUserIds = c.userIds ? [...c.userIds] : [];
-                if (!updatedUserIds.includes(currentUser.id)) {
-                    updatedUserIds.push(currentUser.id);
-                }
-                return { ...c, userIds: updatedUserIds };
+    const handleJoinChannel = async (channelId: string) => {
+        try {
+            const channel = channels.find(c => c.id === channelId);
+            if (!channel) return;
+            const updatedUserIds = channel.userIds ? [...channel.userIds] : [];
+            if (!updatedUserIds.includes(currentUser.id)) {
+                updatedUserIds.push(currentUser.id);
             }
-            return c;
-        }));
-        setActiveChannelId(channelId);
+            await channelService.update(channelId, { members: updatedUserIds });
+
+            setChannels(prev => prev.map(c => {
+                if (c.id === channelId) {
+                    return { ...c, userIds: updatedUserIds };
+                }
+                return c;
+            }));
+            setActiveChannelId(channelId);
+        } catch (err) {
+            console.error("Failed to join channel", err);
+        }
     };
 
-    const handleInviteToChannel = (channelId: string, userId: string) => {
-        setChannels(prev => prev.map(c => {
-            if (c.id === channelId) {
-                const updatedUserIds = c.userIds ? [...c.userIds] : [];
-                if (!updatedUserIds.includes(userId)) {
-                    updatedUserIds.push(userId);
-                }
-                return { ...c, userIds: updatedUserIds };
+    const handleInviteToChannel = async (channelId: string, userId: string) => {
+        try {
+            const channel = channels.find(c => c.id === channelId);
+            if (!channel) return;
+            const updatedUserIds = channel.userIds ? [...channel.userIds] : [];
+            if (!updatedUserIds.includes(userId)) {
+                updatedUserIds.push(userId);
             }
-            return c;
-        }));
+            await channelService.update(channelId, { members: updatedUserIds });
+
+            setChannels(prev => prev.map(c => {
+                if (c.id === channelId) {
+                    return { ...c, userIds: updatedUserIds };
+                }
+                return c;
+            }));
+        } catch (err) {
+            console.error("Failed to invite user to channel", err);
+        }
     };
 
     const handleLeaveWorkspace = (workspaceId: string) => {
@@ -571,26 +593,34 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         setActiveChannelId('');
     };
 
-    const handleLeaveChannel = (channelId: string) => {
-        setChannels(prev => {
-            const updated = prev.map(c => {
-                if (c.id === channelId) {
-                    const updatedUserIds = c.userIds ? c.userIds.filter(id => id !== currentUser.id) : [];
-                    return { ...c, userIds: updatedUserIds };
+    const handleLeaveChannel = async (channelId: string) => {
+        try {
+            const channel = channels.find(c => c.id === channelId);
+            if (!channel) return;
+            const updatedUserIds = channel.userIds ? channel.userIds.filter(id => id !== currentUser.id) : [];
+            await channelService.update(channelId, { members: updatedUserIds });
+
+            setChannels(prev => {
+                const updated = prev.map(c => {
+                    if (c.id === channelId) {
+                        return { ...c, userIds: updatedUserIds };
+                    }
+                    return c;
+                });
+
+                const wsChannels = updated.filter(c => c.workspaceId === activeWorkspaceId && (!c.isPrivate || (c.userIds?.includes(currentUser.id) ?? false)));
+                const generalChannel = wsChannels.find(c => c.name === 'general') || wsChannels[0];
+                if (generalChannel) {
+                    setActiveChannelId(generalChannel.id);
+                } else {
+                    setActiveChannelId('');
                 }
-                return c;
+
+                return updated;
             });
-
-            const wsChannels = updated.filter(c => c.workspaceId === activeWorkspaceId && (c.userIds?.includes(currentUser.id) ?? false));
-            const generalChannel = wsChannels.find(c => c.name === 'general') || wsChannels[0];
-            if (generalChannel) {
-                setActiveChannelId(generalChannel.id);
-            } else {
-                setActiveChannelId('');
-            }
-
-            return updated;
-        });
+        } catch (err) {
+            console.error("Failed to leave channel", err);
+        }
     };
 
     const handleLogout = () => {
@@ -796,25 +826,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
     );
 }
 
-// Simple logic helper to get a response
-function getSimulatedResponse(userMsg: string, channelName: string): string {
-    const msg = userMsg.toLowerCase();
-    if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
-        return `Hey there! Glad to connect in #${channelName}. What are you working on today?`;
-    }
-    if (msg.includes('react 19')) {
-        return `React 19 concurrent mode and server components are really shaking up frontend architectures!`;
-    }
-    if (msg.includes('tailwind')) {
-        return `Tailwind CSS v4's direct compilation is blazing fast. The performance upgrade is noticeable.`;
-    }
-    if (msg.includes('socket.io') || msg.includes('websocket')) {
-        return `Socket.IO makes pub/sub real-time events extremely easy to build.`;
-    }
-    if (msg.includes('redis')) {
-        return `Redis pub/sub is essential when scaling the WebSocket servers behind a load balancer!`;
-    }
-    return `Interesting input! Let's keep iterating on our real-time workspace prototype. Let me know if you want to test anything else.`;
-}
+
 
 export default WorkspaceApp;

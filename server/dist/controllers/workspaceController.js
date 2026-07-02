@@ -7,7 +7,9 @@ exports.joinWorkspaceByInvite = exports.validateInviteLink = exports.generateInv
 const mongoose_1 = __importDefault(require("mongoose"));
 const Workspace_1 = __importDefault(require("../models/Workspace"));
 const User_1 = __importDefault(require("../models/User"));
+const Channel_1 = __importDefault(require("../models/Channel"));
 const crypto_1 = __importDefault(require("crypto"));
+const Activity_1 = __importDefault(require("../models/Activity"));
 const workspacePopulateOptions = [
     { path: "owner", select: "name email role avatar" },
     { path: "members", select: "name email role avatar" },
@@ -48,6 +50,22 @@ const createWorkspace = async (req, res) => {
             owner,
             members: normalizedMembers,
         });
+        // Automatically create a general channel for the workspace
+        await Channel_1.default.create({
+            name: "general",
+            description: "General discussion",
+            workspaceId: workspace._id,
+            createdBy: owner,
+            isPrivate: false,
+            type: "channel",
+            members: normalizedMembers,
+        });
+        await Activity_1.default.create({
+            user: owner,
+            workspace: workspace._id,
+            action: "WORKSPACE_CREATED",
+            details: `created workspace ${workspace.name}`,
+        });
         const populatedWorkspace = await Workspace_1.default.findById(workspace._id).populate(workspacePopulateOptions);
         res.status(201).json({
             success: true,
@@ -66,7 +84,10 @@ const createWorkspace = async (req, res) => {
 exports.createWorkspace = createWorkspace;
 const getAllWorkspaces = async (req, res) => {
     try {
-        const workspaces = await Workspace_1.default.find().populate(workspacePopulateOptions);
+        const userId = req.user?.id;
+        const workspaces = await Workspace_1.default.find({
+            members: userId,
+        }).populate(workspacePopulateOptions);
         res.status(200).json({
             success: true,
             message: "Workspaces fetched successfully",
@@ -209,6 +230,13 @@ const generateInviteLink = async (req, res) => {
         workspace.inviteToken = token;
         workspace.inviteExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // expires in 24 hours
         await workspace.save();
+        // Log invite generation activity
+        await Activity_1.default.create({
+            user: req.user?.id,
+            workspace: workspace._id,
+            action: "INVITE_GENERATED",
+            details: "generated an invitation link",
+        });
         res.status(200).json({
             success: true,
             message: "Invite link generated successfully",
@@ -298,6 +326,14 @@ const joinWorkspaceByInvite = async (req, res) => {
         }
         workspace.members.push(new mongoose_1.default.Types.ObjectId(userId));
         await workspace.save();
+        // Automatically add the user to the general channel of the joined workspace
+        await Channel_1.default.findOneAndUpdate({ workspaceId: workspace._id, name: "general" }, { $addToSet: { members: new mongoose_1.default.Types.ObjectId(userId) } });
+        await Activity_1.default.create({
+            user: userId,
+            workspace: workspace._id,
+            action: "USER_JOINED",
+            details: `joined workspace ${workspace.name}`,
+        });
         res.status(200).json({
             success: true,
             message: "Joined workspace successfully",

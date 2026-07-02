@@ -39,8 +39,8 @@ function ChannelList({
   const [chanDesc, setChanDesc] = useState('');
   const [chanPrivate, setChanPrivate] = useState(false);
 
-  // Filter channels & DMs (only display joined channels in the sidebar)
-  const textChannels = channels.filter(c => c.type === 'channel' && (c.userIds?.includes(currentUser.id) ?? true));
+  // Filter channels & DMs (only display joined channels or public channels in the sidebar)
+  const textChannels = channels.filter(c => c.type === 'channel' && (!c.isPrivate || (c.userIds?.includes(currentUser.id) ?? true)));
   const dmChannels = channels.filter(c => c.type === 'dm' && (c.userIds?.includes(currentUser.id) ?? true));
 
   const handleCreateChannelSubmit = (e: React.FormEvent) => {

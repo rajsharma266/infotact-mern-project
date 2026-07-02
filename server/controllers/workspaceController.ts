@@ -264,6 +264,14 @@ export const generateInviteLink = async (req: Request, res: Response) => {
 
     await workspace.save();
 
+    // Log invite generation activity
+    await Activity.create({
+      user: req.user?.id,
+      workspace: workspace._id,
+      action: "INVITE_GENERATED",
+      details: "generated an invitation link",
+    });
+
     res.status(200).json({
       success: true,
       message: "Invite link generated successfully",
