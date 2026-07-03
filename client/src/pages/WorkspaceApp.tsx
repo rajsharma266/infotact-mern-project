@@ -567,42 +567,30 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         }
     };
 
-    const handleLeaveWorkspace = (workspaceId: string) => {
-        setWorkspaces(prev => prev.map(ws => {
-            if (ws.id === workspaceId) {
-                const updatedUserIds = ws.userIds ? ws.userIds.filter(id => id !== currentUser.id) : [];
-                return {
-                    ...ws,
-                    membersCount: updatedUserIds.length,
-                    userIds: updatedUserIds
-                };
+    const handleLeaveWorkspace = async (workspaceId: string) => {
+        try {
+            await workspaceService.exit(workspaceId);
+            setWorkspaces(prev => prev.filter(ws => ws.id !== workspaceId));
+            
+            if (activeWorkspaceId === workspaceId) {
+                setCurrentView('dashboard');
+                setActiveWorkspaceId('');
+                setActiveChannelId('');
             }
-            return ws;
-        }));
-
-        setChannels(prev => prev.map(c => {
-            if (c.workspaceId === workspaceId) {
-                const updatedUserIds = c.userIds ? c.userIds.filter(id => id !== currentUser.id) : [];
-                return { ...c, userIds: updatedUserIds };
-            }
-            return c;
-        }));
-
-        setCurrentView('dashboard');
-        setActiveWorkspaceId('');
-        setActiveChannelId('');
+        } catch (err: any) {
+            console.error("Failed to leave workspace", err);
+            alert(err.response?.data?.message || "Failed to leave workspace");
+        }
     };
 
     const handleLeaveChannel = async (channelId: string) => {
         try {
-            const channel = channels.find(c => c.id === channelId);
-            if (!channel) return;
-            const updatedUserIds = channel.userIds ? channel.userIds.filter(id => id !== currentUser.id) : [];
-            await channelService.update(channelId, { members: updatedUserIds });
+            await channelService.exit(channelId);
 
             setChannels(prev => {
                 const updated = prev.map(c => {
                     if (c.id === channelId) {
+                        const updatedUserIds = c.userIds ? c.userIds.filter(id => id !== currentUser.id) : [];
                         return { ...c, userIds: updatedUserIds };
                     }
                     return c;
@@ -618,8 +606,9 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
 
                 return updated;
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to leave channel", err);
+            alert(err.response?.data?.message || "Failed to leave channel");
         }
     };
 

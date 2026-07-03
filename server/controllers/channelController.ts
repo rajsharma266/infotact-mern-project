@@ -49,17 +49,25 @@ export const createChannel = async (req: Request, res: Response) => {
       });
     }
 
-    // Set up members array - default to the creator
-    const memberIds = Array.isArray(members) ? members : [createdBy];
-    const normalizedMembers = Array.from(new Set([createdBy, ...memberIds]));
+    // Set up members array - public channels automatically get all workspace members
+    const channelIsPrivate = isPrivate ?? false;
+    const channelType = type || "channel";
+    
+    let normalizedMembers;
+    if (channelType === "channel" && !channelIsPrivate) {
+      normalizedMembers = workspace.members;
+    } else {
+      const memberIds = Array.isArray(members) ? members : [createdBy];
+      normalizedMembers = Array.from(new Set([createdBy, ...memberIds]));
+    }
 
     const channel = await Channel.create({
       name,
       description: description || "",
       workspaceId,
       createdBy,
-      isPrivate: isPrivate ?? false,
-      type: type || "channel",
+      isPrivate: channelIsPrivate,
+      type: channelType,
       recipientId: recipientId || null,
       members: normalizedMembers,
     });
@@ -324,6 +332,72 @@ export const deleteChannel = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Channel deleted successfully",
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+export const exitChannel = async (req: Request, res: Response) => {
+  try {
+    const channelId = String(req.params.id);
+    const userId = req.user?.id;
+
+    if (!mongoose.Types.ObjectId.isValid(channelId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid channel id",
+      });
+    }
+
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({
+        success: false,
+        message: "Channel not found",
+      });
+    }
+
+    // Cannot exit 'general' channel
+    if (channel.name === "general") {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot leave the general channel",
+      });
+    }
+
+    // Check if user is a member of the channel
+    const isMember = channel.members?.some(
+      (mId) => mId.toString() === userId
+    );
+    if (!isMember) {
+      return res.status(400).json({
+        success: false,
+        message: "You are not a member of this channel",
+      });
+    }
+
+    // Remove user from channel members
+    channel.members = channel.members?.filter(
+      (mId) => mId.toString() !== userId
+    ) || [];
+    await channel.save();
+
+    // Log Activity
+    await Activity.create({
+      user: userId,
+      workspace: channel.workspaceId,
+      action: "USER_LEFT",
+      details: `left channel ${channel.name}`,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Exited channel successfully",
     });
   } catch (error: any) {
     res.status(500).json({

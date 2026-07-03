@@ -186,6 +186,13 @@ export const updateWorkspace = async (req: Request, res: Response) => {
       });
     }
 
+    if (members && Array.isArray(members)) {
+      await Channel.updateMany(
+        { workspaceId: id, isPrivate: false, type: "channel" },
+        { $addToSet: { members: { $each: members.map((mId: string) => new mongoose.Types.ObjectId(mId)) } } }
+      );
+    }
+
     res.status(200).json({
       success: true,
       message: "Workspace updated successfully",
@@ -378,9 +385,9 @@ export const joinWorkspaceByInvite = async (req: Request, res: Response) => {
     workspace.members.push(new mongoose.Types.ObjectId(userId));
     await workspace.save();
 
-    // Automatically add the user to the general channel of the joined workspace
-    await Channel.findOneAndUpdate(
-      { workspaceId: workspace._id, name: "general" },
+    // Automatically add the user to all public channels of the joined workspace
+    await Channel.updateMany(
+      { workspaceId: workspace._id, isPrivate: false, type: "channel" },
       { $addToSet: { members: new mongoose.Types.ObjectId(userId) } }
     );
 
@@ -395,6 +402,78 @@ export const joinWorkspaceByInvite = async (req: Request, res: Response) => {
       success: true,
       message: "Joined workspace successfully",
       data: workspace,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+export const exitWorkspace = async (req: Request, res: Response) => {
+  try {
+    const workspaceId = String(req.params.id);
+    const userId = req.user?.id;
+
+    if (!mongoose.Types.ObjectId.isValid(workspaceId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid workspace id",
+      });
+    }
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: "Workspace not found",
+      });
+    }
+
+    // Owner cannot exit
+    if (workspace.owner.toString() === userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Workspace owner cannot exit the workspace. You must delete the workspace or transfer ownership first.",
+      });
+    }
+
+    // Check if user is a member
+    const isMember = workspace.members.some(
+      (mId) => mId.toString() === userId
+    );
+    if (!isMember) {
+      return res.status(400).json({
+        success: false,
+        message: "You are not a member of this workspace",
+      });
+    }
+
+    // Remove user from workspace members
+    workspace.members = workspace.members.filter(
+      (mId) => mId.toString() !== userId
+    );
+    await workspace.save();
+
+    // Remove user from all channels in this workspace
+    await Channel.updateMany(
+      { workspaceId: workspace._id },
+      { $pull: { members: new mongoose.Types.ObjectId(userId) } }
+    );
+
+    // Log Activity
+    await Activity.create({
+      user: userId,
+      workspace: workspace._id,
+      action: "USER_LEFT",
+      details: `left workspace ${workspace.name}`,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Exited workspace successfully",
     });
   } catch (error: any) {
     res.status(500).json({

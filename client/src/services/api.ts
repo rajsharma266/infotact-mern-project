@@ -78,6 +78,10 @@ export const workspaceService = {
     const res = await api.get(`/workspaces/invite/${token}`);
     return res.data.data;
   },
+  exit: async (id: string) => {
+    const res = await api.post(`/workspaces/${id}/exit`);
+    return res.data;
+  },
 };
 
 // Channel Services
@@ -110,6 +114,10 @@ export const channelService = {
   },
   delete: async (id: string) => {
     const res = await api.delete(`/channels/${id}`);
+    return res.data;
+  },
+  exit: async (id: string) => {
+    const res = await api.post(`/channels/${id}/exit`);
     return res.data;
   },
 };

@@ -8,6 +8,7 @@ import {
   generateInviteLink,
   validateInviteLink,
   joinWorkspaceByInvite,
+  exitWorkspace,
 } from "../controllers/workspaceController";
 import { authMiddleware } from "../middleware/authMiddleware";
 
@@ -21,11 +22,9 @@ router.get("/", getAllWorkspaces);
 
 router.post("/join", joinWorkspaceByInvite);
 router.post("/:id/invite", generateInviteLink);
+router.post("/:id/exit", exitWorkspace);
 router.get("/:id", getWorkspaceById);
 router.put("/:id", updateWorkspace);
 router.delete("/:id", deleteWorkspace);
-
-
-
 
 export default router;
