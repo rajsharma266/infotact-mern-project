@@ -32,6 +32,7 @@ interface WorkspaceProps {
   onLeaveChannel?: (channelId: string) => void;
   onLogout?: () => void;
   onTogglePin: (messageId: string) => void;
+  onDeleteMessage: (messageId: string) => void;
 }
 
 function Workspace({
@@ -59,6 +60,7 @@ function Workspace({
   onLeaveChannel,
   onLogout,
   onTogglePin,
+  onDeleteMessage,
 }: WorkspaceProps) {
   const [showMembersPanel, setShowMembersPanel] = useState<boolean>(false);
   const [showProfilePanel, setShowProfilePanel] = useState<boolean>(false);
@@ -174,6 +176,7 @@ function Workspace({
           onSendMessage={onSendMessage}
           onAddReaction={onAddReaction}
           onTogglePin={onTogglePin}
+          onDeleteMessage={onDeleteMessage}
           typingUsers={typingUsers}
           toggleMembersList={toggleMembersList}
           showMembersList={showMembersPanel}

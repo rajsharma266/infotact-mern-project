@@ -652,6 +652,14 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         }
     };
 
+    const handleDeleteMessage = async (messageId: string) => {
+        try {
+            await messageService.delete(messageId);
+        } catch (err) {
+            console.error("Failed to delete message", err);
+        }
+    };
+
     const targetWorkspace = workspaces.find(w => w.id === pendingInviteId);
     const isAlreadyMember = targetWorkspace?.userIds?.includes(currentUser.id);
 
@@ -794,6 +802,7 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
                     onSendMessage={handleSendMessage}
                     onAddReaction={handleAddReaction}
                     onTogglePin={handleTogglePin}
+                    onDeleteMessage={handleDeleteMessage}
                     users={users}
                     currentUser={currentUser}
                     typingUsers={typing}
