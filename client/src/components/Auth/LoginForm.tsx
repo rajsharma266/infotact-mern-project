@@ -75,7 +75,7 @@ export default function LoginForm() {
         disabled={loading}
       />
       <div>
-        <label className="block text-sm text-slate-300 mb-2">
+        <label className="block text-sm text-zinc-300 mb-2">
           Password
         </label>
 
@@ -88,7 +88,7 @@ export default function LoginForm() {
       </div>
 
       <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
+        <label className="flex items-center gap-2 text-zinc-400 cursor-pointer">
           <input
             type="checkbox"
             className="accent-violet-600"
@@ -108,18 +108,18 @@ export default function LoginForm() {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-700"></div>
+          <div className="w-full border-t border-zinc-800"></div>
         </div>
 
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-slate-900 px-3 text-slate-500">
+          <span className="bg-zinc-950 px-3 text-zinc-500">
             Or continue with
           </span>
         </div>
       </div>
       <button
         type="button"
-        className="w-full flex items-center justify-center gap-3 bg-slate-800 border border-slate-700 text-white py-3 rounded-lg hover:bg-slate-700 transition"
+        className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-zinc-800 text-white py-3 rounded-lg hover:bg-zinc-800 hover:border-zinc-700 transition"
         disabled={loading}
       >
         <FcGoogle size={22} />
@@ -129,7 +129,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
       >
         {loading ? (
           <>
@@ -141,7 +141,7 @@ export default function LoginForm() {
         )}
       </button>
 
-      <div className="text-center text-sm text-slate-400">
+      <div className="text-center text-sm text-zinc-400">
         Don't have an account?
         <Link
           to="/signup"

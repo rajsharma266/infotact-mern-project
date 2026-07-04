@@ -10,13 +10,13 @@ export default function AuthInput({
 }: AuthInputProps) {
   return (
     <div>
-      <label className="block text-sm text-slate-300 mb-2">
+      <label className="block text-sm text-zinc-300 mb-2">
         {label}
       </label>
 
       <input
         {...props}
-        className="w-full p-3 rounded-lg bg-slate-800 text-white border border-slate-700 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="w-full p-3 rounded-lg bg-black text-white border border-zinc-800 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition"
       />
     </div>
   );

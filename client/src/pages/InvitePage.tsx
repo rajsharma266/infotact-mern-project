@@ -34,7 +34,7 @@ function InvitePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
         Loading invite...
       </div>
     );
@@ -42,7 +42,7 @@ function InvitePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-red-400">
+      <div className="min-h-screen bg-black flex items-center justify-center text-red-400">
         {error}
       </div>
     );
@@ -85,28 +85,32 @@ const handleJoin = async () => {
   }
 };
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
-        <h1 className="text-2xl font-bold text-white text-center mb-6">
+    <div className="min-h-screen bg-black flex items-center justify-center px-4 relative overflow-hidden select-none">
+      {/* Decorative premium dark/neon background glows */}
+      <div className="absolute top-[-250px] left-[-250px] w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-250px] right-[-250px] w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="w-full max-w-md bg-zinc-950/70 backdrop-blur-xl border border-zinc-800/80 rounded-2xl shadow-[0_0_50px_-12px_rgba(124,58,237,0.15)] p-8 relative z-10">
+        <h1 className="text-2xl font-black text-white text-center mb-6 tracking-tight">
           Workspace Invitation
         </h1>
 
-        <p className="text-center text-slate-400 mb-6">
+        <p className="text-center text-zinc-400 text-sm mb-6 font-medium">
           You have been invited to join:
         </p>
 
-        <div className="bg-black border border-slate-800 rounded-xl p-6">
-          <h2 className="text-xl font-bold text-indigo-400 text-center mb-4">
+        <div className="bg-black/60 border border-zinc-800/80 rounded-xl p-6">
+          <h2 className="text-xl font-bold text-violet-400 text-center mb-4">
             {workspace?.name}
           </h2>
 
           <div className="space-y-3">
-            <p className="text-slate-300 text-center">
+            <p className="text-zinc-300 text-sm text-center">
               <span className="font-semibold text-white">Owner:</span>{" "}
               {workspace?.owner?.name}
             </p>
 
-            <p className="text-slate-300 text-center">
+            <p className="text-zinc-300 text-sm text-center">
               <span className="font-semibold text-white">Members:</span>{" "}
               {workspace?.members?.length}
             </p>
@@ -116,14 +120,14 @@ const handleJoin = async () => {
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleJoin}
-            className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition cursor-pointer"
+            className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold transition cursor-pointer text-sm"
           >
             Join Workspace
           </button>
 
           <button
             onClick={() => navigate("/")}
-            className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition cursor-pointer"
+            className="flex-1 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-200 font-semibold transition cursor-pointer text-sm"
           >
             Cancel
           </button>
