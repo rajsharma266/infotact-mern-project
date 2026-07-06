@@ -24,7 +24,21 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [typing, setTyping] = useState<string[]>([]);
-    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>(() => {
+        const stored = localStorage.getItem("unreadCounts");
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch (e) {
+                // fallback
+            }
+        }
+        return {};
+    });
+
+    useEffect(() => {
+        localStorage.setItem("unreadCounts", JSON.stringify(unreadCounts));
+    }, [unreadCounts]);
     const [pendingInviteId, setPendingInviteId] = useState<string | null>(null);
     const [guestName, setGuestName] = useState<string>('');
     const [dashboardOpenCreate, setDashboardOpenCreate] = useState(false);
@@ -51,7 +65,7 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         return mockCurrentUser;
     });
 
-    const { joinChannel, leaveChannel, socket } = useSocket();
+    const { joinChannel, leaveChannel, socket, isConnected } = useSocket();
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -176,15 +190,25 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         fetchMessages();
     }, [activeChannelId]);
 
-    // Join/Leave Channel Room via WebSocket
+    // Join/Leave Channel Rooms via WebSocket for all workspace channels the user has access to
     useEffect(() => {
-        if (activeChannelId) {
-            joinChannel(activeChannelId);
-            return () => {
-                leaveChannel(activeChannelId);
-            };
-        }
-    }, [activeChannelId]);
+        if (!socket || !isConnected || !channels || channels.length === 0) return;
+
+        const userChannels = channels.filter(c =>
+            c.workspaceId === activeWorkspaceId &&
+            (c.userIds?.includes(currentUser.id) || (!c.isPrivate && c.type === 'channel'))
+        );
+
+        userChannels.forEach(c => {
+            joinChannel(c.id);
+        });
+
+        return () => {
+            userChannels.forEach(c => {
+                leaveChannel(c.id);
+            });
+        };
+    }, [socket, isConnected, channels, activeWorkspaceId]);
 
     // Listen to real-time events
     useEffect(() => {
@@ -212,6 +236,13 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
                 setMessages((prev) => {
                     if (prev.some((msg) => msg.id === newMsg.id)) return prev;
                     return [...prev, newMsg];
+                });
+                setUnreadCounts((prev) => {
+                    if (prev[payload.channelId] === 0) return prev;
+                    return {
+                        ...prev,
+                        [payload.channelId]: 0,
+                    };
                 });
             } else {
                 setUnreadCounts((prev) => ({
@@ -320,7 +351,7 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         activeChannelIdRef.current = activeChannelId;
         if (activeChannelId) {
             setUnreadCounts(prev => {
-                if (!prev[activeChannelId]) return prev;
+                if (prev[activeChannelId] === 0) return prev;
                 return {
                     ...prev,
                     [activeChannelId]: 0,

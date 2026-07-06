@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from "axios";
 import type { Workspace, User } from '../types';
-import { Plus, Users, ArrowRight, LayoutGrid, Activity, Bell, Compass, Sun, Moon } from 'lucide-react';
+import { Plus, Users, ArrowRight, LayoutGrid, Activity, Bell, Sun, Moon } from 'lucide-react';
 import ProfileDrawer from '../components/Workspace/ProfileDrawer';
 
 interface DashboardProps {
@@ -230,22 +230,10 @@ function Dashboard({
                 <div className="text-xl font-extrabold text-indigo-400">{workspaces.length}</div>
                 <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">Workspaces</div>
               </div>
-              <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-                <div className="text-xl font-extrabold text-purple-400">12</div>
-                <div className="text-[10px] text-slate-400 font-medium uppercase mt-0.5">Total DMs</div>
-              </div>
+              
             </div>
 
-            <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
-              <div>
-                <div className="text-xs text-slate-300 font-bold">API Gateway Status</div>
-                <div className="text-[10px] text-emerald-400 mt-0.5 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-                  Connected to Redis Server
-                </div>
-              </div>
-              <Compass size={22} className="text-emerald-500/40" />
-            </div>
+            
           </div>
 
           {/* TIMELINE ACTIVITIES */}
