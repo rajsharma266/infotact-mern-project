@@ -2,26 +2,76 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import WorkspaceApp from "./pages/WorkspaceApp";
+import { hasToken } from "./services/api";
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  if (!hasToken()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
 
 function App() {
+  const isAuthenticated = hasToken();
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to={isAuthenticated ? "/dashboard" : "/login"}
+            replace
+          />
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />
+        }
+      />
+      <Route path="/signup" element={<Navigate to="/register" replace />} />
       <Route
         path="/dashboard"
-        element={<WorkspaceApp initialView="dashboard" />}
+        element={
+          <ProtectedRoute>
+            <WorkspaceApp initialView="dashboard" />
+          </ProtectedRoute>
+        }
       />
       <Route
-        path="/workspace"
-        element={<WorkspaceApp initialView="workspace" />}
+        path="/workspace/:id"
+        element={
+          <ProtectedRoute>
+            <WorkspaceApp initialView="workspace" />
+          </ProtectedRoute>
+        }
       />
       <Route
-        path="/workspaceapp"
-        element={<WorkspaceApp initialView="dashboard" />}
+        path="/channel/:id"
+        element={
+          <ProtectedRoute>
+            <WorkspaceApp initialView="workspace" />
+          </ProtectedRoute>
+        }
       />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to={isAuthenticated ? "/dashboard" : "/login"}
+            replace
+          />
+        }
+      />
     </Routes>
   );
 }

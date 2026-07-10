@@ -1,9 +1,9 @@
 export interface User {
   id: string;
   name: string;
-  avatar: string; // initials or profile background color code
-  status: 'online' | 'offline' | 'away';
-  role: 'Admin' | 'Member';
+  avatar: string;
+  status: "online" | "offline" | "away";
+  role: "Admin" | "Member";
   email?: string;
 }
 
@@ -32,9 +32,10 @@ export interface Channel {
   name: string;
   description: string;
   isPrivate: boolean;
-  type: 'channel' | 'dm';
-  recipientId?: string; // If it's a DM, who is the recipient
-  userIds?: string[];
+  type: "channel" | "dm";
+  recipientId?: string;
+  userIds: string[];
+  createdBy?: string;
 }
 
 export interface Workspace {
@@ -43,5 +44,6 @@ export interface Workspace {
   description: string;
   logo: string;
   membersCount: number;
-  userIds?: string[];
+  userIds: string[];
+  ownerId: string;
 }

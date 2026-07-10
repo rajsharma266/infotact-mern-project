@@ -5,13 +5,22 @@ import Workspace from "../models/Workspace";
 import User from "../models/User";
 
 const channelPopulateOptions = [
-  { path: "workspaceId", select: "name description owner members" },
+  {
+    path: "workspaceId",
+    select: "name description owner members",
+    populate: [
+      { path: "owner", select: "name email role avatar" },
+      { path: "members", select: "name email role avatar" },
+    ],
+  },
   { path: "createdBy", select: "name email role avatar" },
+  { path: "members", select: "name email role avatar" },
 ];
 
 export const createChannel = async (req: Request, res: Response) => {
   try {
-    const { name, description, workspaceId, createdBy } = req.body;
+    const { name, description, workspaceId, isPrivate, members } = req.body;
+    const createdBy = req.user?.id ?? req.body.createdBy;
 
     if (!name || !workspaceId || !createdBy) {
       return res.status(400).json({
@@ -39,6 +48,17 @@ export const createChannel = async (req: Request, res: Response) => {
       });
     }
 
+    const isWorkspaceMember = workspace.members.some(
+      (memberId) => memberId.toString() === createdBy
+    );
+
+    if (!isWorkspaceMember && workspace.owner.toString() !== createdBy) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not a member of this workspace",
+      });
+    }
+
     const user = await User.findById(createdBy);
 
     if (!user) {
@@ -48,11 +68,26 @@ export const createChannel = async (req: Request, res: Response) => {
       });
     }
 
+    if (members && !Array.isArray(members)) {
+      return res.status(400).json({
+        success: false,
+        message: "members must be an array",
+      });
+    }
+
+    const resolvedMembers = Array.isArray(members)
+      ? Array.from(new Set([createdBy, ...members]))
+      : isPrivate
+        ? [createdBy]
+        : workspace.members.map((memberId) => memberId.toString());
+
     const channel = await Channel.create({
       name,
       description,
       workspaceId,
       createdBy,
+      isPrivate: Boolean(isPrivate),
+      members: resolvedMembers,
     });
 
     const populatedChannel = await Channel.findById(channel._id).populate(
@@ -75,7 +110,30 @@ export const createChannel = async (req: Request, res: Response) => {
 
 export const getAllChannels = async (req: Request, res: Response) => {
   try {
-    const channels = await Channel.find().populate(channelPopulateOptions);
+    const userId = req.user?.id;
+    const workspaceId = req.query.workspaceId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const workspaceFilter =
+      typeof workspaceId === "string" ? { _id: workspaceId } : {};
+    const accessibleWorkspaces = await Workspace.find({
+      ...workspaceFilter,
+      $or: [{ owner: userId }, { members: userId }],
+    }).select("_id");
+
+    const accessibleWorkspaceIds = accessibleWorkspaces.map(
+      (workspace) => workspace._id
+    );
+
+    const channels = await Channel.find({
+      workspaceId: { $in: accessibleWorkspaceIds },
+    }).populate(channelPopulateOptions);
 
     res.status(200).json({
       success: true,
@@ -94,6 +152,14 @@ export const getAllChannels = async (req: Request, res: Response) => {
 export const getChannelById = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -108,6 +174,18 @@ export const getChannelById = async (req: Request, res: Response) => {
       return res.status(404).json({
         success: false,
         message: "Channel not found",
+      });
+    }
+
+    const accessibleWorkspace = await Workspace.exists({
+      _id: channel.workspaceId,
+      $or: [{ owner: userId }, { members: userId }],
+    });
+
+    if (!accessibleWorkspace) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have access to this channel",
       });
     }
 
@@ -128,7 +206,8 @@ export const getChannelById = async (req: Request, res: Response) => {
 export const updateChannel = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { workspaceId, createdBy } = req.body;
+    const { workspaceId, createdBy, members } = req.body;
+    const updates = { ...req.body };
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -179,7 +258,20 @@ export const updateChannel = async (req: Request, res: Response) => {
       }
     }
 
-    const channel = await Channel.findByIdAndUpdate(id, req.body, {
+    if (members && !Array.isArray(members)) {
+      return res.status(400).json({
+        success: false,
+        message: "members must be an array",
+      });
+    }
+
+    if (Array.isArray(members)) {
+      updates.members = Array.from(
+        new Set(createdBy ? [createdBy, ...members] : members)
+      );
+    }
+
+    const channel = await Channel.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     }).populate(channelPopulateOptions);

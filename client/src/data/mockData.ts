@@ -59,6 +59,7 @@ export const mockWorkspaces: Workspace[] = [
     description: "Engineering and Product Development collaboration space",
     logo: "TN",
     membersCount: 5,
+    ownerId: "user-infotact",
     userIds: [
       "user-infotact",
       "user-alice",
@@ -73,6 +74,7 @@ export const mockWorkspaces: Workspace[] = [
     description: "UI/UX Design, creative branding and branding guidelines",
     logo: "DS",
     membersCount: 3,
+    ownerId: "user-diana",
     userIds: ["user-alice", "user-charlie", "user-diana"],
   },
   {
@@ -81,6 +83,7 @@ export const mockWorkspaces: Workspace[] = [
     description: "Social campaigns, growth hacking, and ad strategies",
     logo: "MH",
     membersCount: 2,
+    ownerId: "user-bob",
     userIds: ["user-bob", "user-evan"],
   },
 ];

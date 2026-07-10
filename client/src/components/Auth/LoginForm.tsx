@@ -1,31 +1,70 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
 import AuthInput from "./AuthInput";
+import ErrorMessage from "./ErrorMessage";
+import {
+  loginUser,
+  saveSession,
+  toApiErrorMessage,
+  toUser,
+} from "../../services/api";
 
 export default function LoginForm() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    navigate("/dashboard");
+
+    try {
+      setIsSubmitting(true);
+      setError("");
+
+      const response = await loginUser({ email, password });
+      saveSession(response.token, toUser(response.data));
+      navigate("/dashboard", { replace: true });
+    } catch (submitError) {
+      setError(toApiErrorMessage(submitError));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <AuthInput
         label="Email"
+        name="email"
         type="email"
         placeholder="Enter your email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        autoComplete="email"
+        required
+        disabled={isSubmitting}
       />
       <div>
         <label className="block text-sm text-slate-300 mb-2">
           Password
         </label>
 
-        <PasswordInput placeholder="Enter your password" />
+        <PasswordInput
+          name="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="current-password"
+          required
+          disabled={isSubmitting}
+        />
       </div>
+
+      {error ? <ErrorMessage message={error} /> : null}
 
       <div className="flex items-center justify-between text-sm">
         <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
@@ -65,15 +104,16 @@ export default function LoginForm() {
 
       <button
         type="submit"
+        disabled={isSubmitting}
         className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition"
       >
-        Login
+        {isSubmitting ? "Logging in..." : "Login"}
       </button>
 
       <div className="text-center text-sm text-slate-400">
         Don't have an account?
         <Link
-          to="/signup"
+          to="/register"
           className="ml-2 text-violet-400 hover:text-violet-300 font-medium"
         >
           Sign Up

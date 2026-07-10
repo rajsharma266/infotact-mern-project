@@ -5,6 +5,8 @@ export interface IChannel extends Document {
   description?: string;
   workspaceId: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
+  isPrivate: boolean;
+  members: mongoose.Types.ObjectId[];
 }
 
 const channelSchema = new mongoose.Schema<IChannel>(
@@ -29,6 +31,16 @@ const channelSchema = new mongoose.Schema<IChannel>(
       ref: "User",
       required: true,
     },
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -18,7 +18,8 @@ const messagePopulateOptions = [
 
 export const sendMessage = async (req: Request, res: Response) => {
   try {
-    const { content, sender, channelId, attachments } = req.body;
+    const { content, channelId, attachments } = req.body;
+    const sender = req.user?.id ?? req.body.sender;
 
     if (!content || !sender || !channelId) {
       return res.status(400).json({
@@ -59,6 +60,16 @@ export const sendMessage = async (req: Request, res: Response) => {
       return res.status(404).json({
         success: false,
         message: "Channel not found",
+      });
+    }
+
+    if (
+      channel.isPrivate &&
+      !channel.members.some((memberId) => memberId.toString() === sender)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have access to this channel",
       });
     }
 

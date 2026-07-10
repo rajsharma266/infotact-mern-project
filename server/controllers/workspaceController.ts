@@ -10,7 +10,8 @@ const workspacePopulateOptions = [
 
 export const createWorkspace = async (req: Request, res: Response) => {
   try {
-    const { name, description, owner, members } = req.body;
+    const { name, description, members } = req.body;
+    const owner = req.user?.id ?? req.body.owner;
 
     if (!name || !owner) {
       return res.status(400).json({
@@ -42,7 +43,7 @@ export const createWorkspace = async (req: Request, res: Response) => {
       });
     }
 
-    const memberIds = Array.isArray(members) ? members : [owner];
+    const memberIds = Array.isArray(members) ? members : [];
     const normalizedMembers = Array.from(new Set([owner, ...memberIds]));
 
     const workspace = await Workspace.create({
@@ -72,7 +73,18 @@ export const createWorkspace = async (req: Request, res: Response) => {
 
 export const getAllWorkspaces = async (req: Request, res: Response) => {
   try {
-    const workspaces = await Workspace.find().populate(workspacePopulateOptions);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const workspaces = await Workspace.find({
+      $or: [{ owner: userId }, { members: userId }],
+    }).populate(workspacePopulateOptions);
 
     res.status(200).json({
       success: true,
@@ -126,6 +138,7 @@ export const updateWorkspace = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const { owner, members } = req.body;
+    const updates = { ...req.body };
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -148,9 +161,15 @@ export const updateWorkspace = async (req: Request, res: Response) => {
       });
     }
 
+    if (Array.isArray(members)) {
+      updates.members = Array.from(
+        new Set(owner ? [owner, ...members] : members)
+      );
+    }
+
     const workspace = await Workspace.findByIdAndUpdate(
       id,
-      req.body,
+      updates,
       { new: true, runValidators: true }
     ).populate(workspacePopulateOptions);
 

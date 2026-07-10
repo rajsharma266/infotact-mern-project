@@ -3,11 +3,17 @@ import AuthInput from "./AuthInput";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
+import ErrorMessage from "./ErrorMessage";
+import { registerUser, toApiErrorMessage } from "../../services/api";
 
 export default function SignupForm() {
     const navigate = useNavigate();
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const hasLength = password.length >= 8;
     const hasUppercase = /[A-Z]/.test(password);
@@ -18,28 +24,51 @@ export default function SignupForm() {
         confirmPassword.length > 0 &&
         password === confirmPassword;
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       if (!passwordsMatch) {
+        setError("Passwords do not match");
         return;
       }
 
-      navigate("/dashboard");
+      try {
+        setIsSubmitting(true);
+        setError("");
+
+        await registerUser({ name, email, password });
+        navigate("/login", { replace: true });
+      } catch (submitError) {
+        setError(toApiErrorMessage(submitError));
+      } finally {
+        setIsSubmitting(false);
+      }
     };
 
     return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <AuthInput
         label="Full Name"
+        name="name"
         type="text"
         placeholder="Enter your full name"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        autoComplete="name"
+        required
+        disabled={isSubmitting}
       />
 
       <AuthInput
         label="Email"
+        name="email"
         type="email"
         placeholder="Enter your email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        autoComplete="email"
+        required
+        disabled={isSubmitting}
       />
 
       <div>
@@ -48,9 +77,13 @@ export default function SignupForm() {
         </label>
 
         <PasswordInput
+          name="password"
           placeholder="Create a password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          required
+          disabled={isSubmitting}
         />
 
         <div className="mt-3 space-y-1 text-xs">
@@ -76,11 +109,15 @@ export default function SignupForm() {
         </label>
 
         <PasswordInput
+          name="confirmPassword"
           placeholder="Confirm your password"
           value={confirmPassword}
           onChange={(e) =>
             setConfirmPassword(e.target.value)
           }
+          autoComplete="new-password"
+          required
+          disabled={isSubmitting}
         />
 
         {confirmPassword.length > 0 && (
@@ -98,11 +135,14 @@ export default function SignupForm() {
         )}
       </div>
 
+      {error ? <ErrorMessage message={error} /> : null}
+
       <button
         type="submit"
+        disabled={isSubmitting}
         className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition"
       >
-        Create Account
+        {isSubmitting ? "Creating Account..." : "Create Account"}
       </button>
 
       <div className="relative">

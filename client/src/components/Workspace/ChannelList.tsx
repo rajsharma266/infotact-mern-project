@@ -6,7 +6,7 @@ interface ChannelListProps {
   channels: Channel[];
   activeChannelId: string;
   onSelectChannel: (id: string) => void;
-  onCreateChannel: (name: string, desc: string, isPrivate: boolean) => void;
+  onCreateChannel: (name: string, desc: string, isPrivate: boolean) => void | Promise<void>;
   onCreateDM: (recipientId: string) => void;
   users: User[];
   currentUser: User;
@@ -43,14 +43,18 @@ function ChannelList({
   const textChannels = channels.filter(c => c.type === 'channel' && (c.userIds?.includes(currentUser.id) ?? true));
   const dmChannels = channels.filter(c => c.type === 'dm' && (c.userIds?.includes(currentUser.id) ?? true));
 
-  const handleCreateChannelSubmit = (e: React.FormEvent) => {
+  const handleCreateChannelSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chanName.trim()) return;
-    onCreateChannel(chanName, chanDesc, chanPrivate);
-    setChanName('');
-    setChanDesc('');
-    setChanPrivate(false);
-    setShowChanModal(false);
+    try {
+      await Promise.resolve(onCreateChannel(chanName, chanDesc, chanPrivate));
+      setChanName('');
+      setChanDesc('');
+      setChanPrivate(false);
+      setShowChanModal(false);
+    } catch {
+      // The parent container renders the request error state.
+    }
   };
 
   const handleSelectDMUser = (userId: string) => {
