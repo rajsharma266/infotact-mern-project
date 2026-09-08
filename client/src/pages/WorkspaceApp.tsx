@@ -8,7 +8,7 @@ import { authService, workspaceService, channelService, messageService } from '.
 import { useSocket } from '../contexts/SocketContext';
 
 interface WorkspaceAppProps {
-    initialView?: 'dashboard' | 'workspace';
+  initialView?: "dashboard" | "workspace";
 }
 
 function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
@@ -333,18 +333,16 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         if (location.pathname === '/dashboard' || location.pathname === '/workspaceapp') {
             setCurrentView('dashboard');
         }
-    }, [location.pathname]);
 
     useEffect(() => {
         const targetPath = currentView === 'workspace' ? '/workspace' : '/dashboard';
         if (location.pathname !== targetPath) {
             navigate({ pathname: targetPath, search: location.search }, { replace: true });
         }
-    }, [currentView, location.pathname, location.search, navigate]);
 
-    const toggleTheme = () => {
-        setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-    };
+        const mappedUsers = usersResponse.data.map(toUser);
+        const userMap = new Map(mappedUsers.map((user) => [user.id, user]));
+        userMap.set(resolvedUser.id, resolvedUser);
 
     const activeChannelIdRef = useRef(activeChannelId);
     useEffect(() => {
@@ -358,15 +356,11 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
                 };
             });
         }
-    }, [activeChannelId]);
 
-    // Parse invite query parameters on startup
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const joinId = params.get('join');
-        if (joinId) {
-            setPendingInviteId(joinId);
-            navigate(location.pathname, { replace: true });
+        if (error instanceof Error && "status" in error && error.status === 401) {
+          clearSession();
+          navigate("/login", { replace: true });
+          return;
         }
     }, [location.pathname, location.search, navigate]);
 
@@ -379,12 +373,10 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         } else {
             setActiveChannelId('');
         }
-        setCurrentView('workspace');
+      }
     };
 
-    const handleSelectChannel = (id: string) => {
-        setActiveChannelId(id);
-    };
+    void bootstrap();
 
     const handleCreateWorkspace = async (name: string, description: string) => {
         try {
@@ -407,6 +399,7 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             console.error("Failed to create workspace", err);
         }
     };
+  }, [navigate]);
 
     const handleAcceptInvite = (workspaceId: string, nameToJoin: string, existingUserId?: string) => {
         if (!nameToJoin.trim()) return;
@@ -472,15 +465,16 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         const wsChannels = channels.filter(c => c.workspaceId === workspaceId);
         const generalChannel = wsChannels.find(c => c.name === 'general') || wsChannels[0];
 
-        if (generalChannel) {
-            setActiveChannelId(generalChannel.id);
-        } else {
-            setActiveChannelId('');
+        setActiveWorkspaceId("");
+        setActiveChannelId("");
+        setMessages([]);
+      } catch (error) {
+        if (isCancelled) {
+          return;
         }
 
-        setCurrentView('workspace');
-        setPendingInviteId(null);
-        setGuestName('');
+        setAppError(toApiErrorMessage(error));
+      }
     };
 
     const handleCreateChannel = async (name: string, description: string, isPrivate: boolean) => {
@@ -642,6 +636,7 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             alert(err.response?.data?.message || "Failed to leave channel");
         }
     };
+  }, [activeWorkspaceId]);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -665,7 +660,6 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
         } catch (err) {
             console.error("Failed to send message", err);
         }
-    };
 
     const handleAddReaction = async (messageId: string, emoji: string) => {
         try {
@@ -690,9 +684,12 @@ function WorkspaceApp({ initialView = 'dashboard' }: WorkspaceAppProps) {
             console.error("Failed to delete message", err);
         }
     };
+  }, [activeChannelId]);
 
-    const targetWorkspace = workspaces.find(w => w.id === pendingInviteId);
-    const isAlreadyMember = targetWorkspace?.userIds?.includes(currentUser.id);
+  const visibleChannels = useMemo(
+    () => channels.filter((channel) => channel.workspaceId === activeWorkspaceId),
+    [activeWorkspaceId, channels]
+  );
 
     return (
         <div className="w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 flex flex-col font-sans relative">

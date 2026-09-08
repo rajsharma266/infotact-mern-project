@@ -1,3 +1,4 @@
+```tsx
 import type { InputHTMLAttributes } from "react";
 
 type AuthInputProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -21,3 +22,4 @@ export default function AuthInput({
     </div>
   );
 }
+```

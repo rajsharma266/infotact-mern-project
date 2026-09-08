@@ -13,7 +13,8 @@ const workspacePopulateOptions = [
 
 export const createWorkspace = async (req: Request, res: Response) => {
   try {
-    const { name, description, owner, members } = req.body;
+    const { name, description, members } = req.body;
+    const owner = req.user?.id ?? req.body.owner;
 
     if (!name || !owner) {
       return res.status(400).json({
@@ -45,7 +46,7 @@ export const createWorkspace = async (req: Request, res: Response) => {
       });
     }
 
-    const memberIds = Array.isArray(members) ? members : [owner];
+    const memberIds = Array.isArray(members) ? members : [];
     const normalizedMembers = Array.from(new Set([owner, ...memberIds]));
 
     const workspace = await Workspace.create({
@@ -151,6 +152,7 @@ export const updateWorkspace = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const { owner, members } = req.body;
+    const updates = { ...req.body };
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -173,9 +175,15 @@ export const updateWorkspace = async (req: Request, res: Response) => {
       });
     }
 
+    if (Array.isArray(members)) {
+      updates.members = Array.from(
+        new Set(owner ? [owner, ...members] : members)
+      );
+    }
+
     const workspace = await Workspace.findByIdAndUpdate(
       id,
-      req.body,
+      updates,
       { new: true, runValidators: true }
     ).populate(workspacePopulateOptions);
 

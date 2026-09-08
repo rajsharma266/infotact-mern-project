@@ -6,8 +6,16 @@ import User from "../models/User";
 import Activity from "../models/Activity";
 
 const channelPopulateOptions = [
-  { path: "workspaceId", select: "name description owner members" },
+  {
+    path: "workspaceId",
+    select: "name description owner members",
+    populate: [
+      { path: "owner", select: "name email role avatar" },
+      { path: "members", select: "name email role avatar" },
+    ],
+  },
   { path: "createdBy", select: "name email role avatar" },
+  { path: "members", select: "name email role avatar" },
 ];
 
 export const createChannel = async (req: Request, res: Response) => {
@@ -37,6 +45,17 @@ export const createChannel = async (req: Request, res: Response) => {
       return res.status(404).json({
         success: false,
         message: "Workspace not found",
+      });
+    }
+
+    const isWorkspaceMember = workspace.members.some(
+      (memberId) => memberId.toString() === createdBy
+    );
+
+    if (!isWorkspaceMember && workspace.owner.toString() !== createdBy) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not a member of this workspace",
       });
     }
 
@@ -232,7 +251,8 @@ export const getChannelById = async (req: Request, res: Response) => {
 export const updateChannel = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { workspaceId, createdBy } = req.body;
+    const { workspaceId, createdBy, members } = req.body;
+    const updates = { ...req.body };
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -283,7 +303,20 @@ export const updateChannel = async (req: Request, res: Response) => {
       }
     }
 
-    const channel = await Channel.findByIdAndUpdate(id, req.body, {
+    if (members && !Array.isArray(members)) {
+      return res.status(400).json({
+        success: false,
+        message: "members must be an array",
+      });
+    }
+
+    if (Array.isArray(members)) {
+      updates.members = Array.from(
+        new Set(createdBy ? [createdBy, ...members] : members)
+      );
+    }
+
+    const channel = await Channel.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     }).populate(channelPopulateOptions);

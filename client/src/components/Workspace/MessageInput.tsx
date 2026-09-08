@@ -8,14 +8,25 @@ import {
   Strikethrough,
 } from "lucide-react";
 
+import { socket } from "../../services/socket";
 interface MessageInputProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string) => void | Promise<void>;
   placeholder: string;
 }
 
 function MessageInput({ onSendMessage, placeholder }: MessageInputProps) {
   const [content, setContent] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+useEffect(() => {
+  socket.on("connect", () => {
+    console.log("Socket Connected:", socket.id);
+  });
+
+  return () => {
+    socket.off("connect");
+  };
+}, []);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -27,7 +38,7 @@ function MessageInput({ onSendMessage, placeholder }: MessageInputProps) {
     }
   }, [content]);
 
-  const handleSubmit = (event?: FormEvent) => {
+  const handleSubmit = async (event?: FormEvent) => {
     if (event) {
       event.preventDefault();
     }
@@ -36,19 +47,23 @@ function MessageInput({ onSendMessage, placeholder }: MessageInputProps) {
       return;
     }
 
-    onSendMessage(content.trim());
-    setContent("");
+    try {
+      await Promise.resolve(onSendMessage(content.trim()));
+      setContent("");
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.focus();
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+        textareaRef.current.focus();
+      }
+    } catch {
+      // The parent container renders the request error state.
     }
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      handleSubmit();
+      void handleSubmit();
     }
   };
 

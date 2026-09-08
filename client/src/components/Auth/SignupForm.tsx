@@ -1,216 +1,263 @@
+```tsx
 import { useState, useEffect, type FormEvent } from "react";
 import AuthInput from "./AuthInput";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import ErrorMessage from "./ErrorMessage";
+import {
+  registerUser,
+  saveSession,
+  toApiErrorMessage,
+  toUser,
+} from "../../services/api";
 
 export default function SignupForm() {
-    const navigate = useNavigate();
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        // If already logged in, redirect directly to dashboard
-        const token = localStorage.getItem("token");
-        if (token) {
-            navigate("/dashboard");
+  useEffect(() => {
+    // If already logged in, redirect directly to dashboard
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+
+  const hasLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  const passwordsMatch =
+    confirmPassword.length > 0 &&
+    password === confirmPassword;
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+
+    if (!hasLength || !hasUppercase || !hasNumber || !hasSpecial) {
+      setError("Password does not meet all complexity requirements.");
+      return;
+    }
+
+    if (!passwordsMatch) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await registerUser({
+        name,
+        email,
+        password,
+      });
+
+      /*
+       * If the registration API returns a token and user data,
+       * save the session so pending invitations can be handled
+       * immediately.
+       */
+      if (response?.token && response?.data) {
+        saveSession(response.token, toUser(response.data));
+
+        // Check if there is a pending workspace invitation
+        const pendingInviteToken =
+          localStorage.getItem("pendingInviteToken");
+
+        if (pendingInviteToken) {
+          localStorage.removeItem("pendingInviteToken");
+          navigate(`/invite/${pendingInviteToken}`, {
+            replace: true,
+          });
+        } else {
+          navigate("/dashboard", { replace: true });
         }
-    }, [navigate]);
+      } else {
+        // Development branch behavior:
+        // Registration succeeds, then user goes to login.
+        navigate("/login", { replace: true });
+      }
+    } catch (submitError) {
+      setError(toApiErrorMessage(submitError));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    const hasLength = password.length >= 8;
-    const hasUppercase = /[A-Z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  return (
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      {error && (
+        <div className="p-3 bg-red-950/50 border border-red-500/50 text-red-200 text-sm rounded-lg flex items-center gap-2">
+          <span className="text-red-400 font-semibold">⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
 
-    const passwordsMatch =
-        confirmPassword.length > 0 &&
-        password === confirmPassword;
+      <AuthInput
+        label="Full Name"
+        name="name"
+        type="text"
+        placeholder="Enter your full name"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        autoComplete="name"
+        required
+        disabled={isSubmitting}
+      />
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setError("");
+      <AuthInput
+        label="Email"
+        name="email"
+        type="email"
+        placeholder="Enter your email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        autoComplete="email"
+        required
+        disabled={isSubmitting}
+      />
 
-        if (!hasLength || !hasUppercase || !hasNumber || !hasSpecial) {
-            setError("Password does not meet all complexity requirements.");
-            return;
-        }
+      <div>
+        <label className="block text-sm text-zinc-300 mb-2">
+          Password
+        </label>
 
-        if (!passwordsMatch) {
-            setError("Passwords do not match.");
-            return;
-        }
+        <PasswordInput
+          name="password"
+          placeholder="Create a password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          required
+          disabled={isSubmitting}
+        />
 
-        setLoading(true);
-
-        try {
-            const response = await axios.post("http://localhost:4000/api/users/register", {
-                name,
-                email,
-                password,
-            });
-
-            if (response.data.success) {
-                // Store the returned token and user details for automatic login
-                localStorage.setItem("token", response.data.token);
-                localStorage.setItem("user", JSON.stringify(response.data.data));
-
-                // Check if there is a pending workspace invitation
-                const pendingInviteToken = localStorage.getItem("pendingInviteToken");
-                if (pendingInviteToken) {
-                    localStorage.removeItem("pendingInviteToken");
-                    navigate(`/invite/${pendingInviteToken}`);
-                } else {
-                    navigate("/dashboard");
-                }
-            } else {
-                setError(response.data.message || "Registration failed");
+        <div className="mt-3 space-y-1 text-xs">
+          <p
+            className={
+              hasLength ? "text-emerald-400" : "text-zinc-500"
             }
-        } catch (err: any) {
-            setError(
-                err.response?.data?.message ||
-                "Failed to register. Please try again."
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+          >
+            {hasLength ? "✓" : "○"} At least 8 characters
+          </p>
 
-    return (
-        <form className="space-y-5" onSubmit={handleSubmit}>
-            {error && (
-                <div className="p-3 bg-red-950/50 border border-red-500/50 text-red-200 text-sm rounded-lg flex items-center gap-2">
-                    <span className="text-red-400 font-semibold">⚠️</span>
-                    <span>{error}</span>
-                </div>
-            )}
+          <p
+            className={
+              hasUppercase
+                ? "text-emerald-400"
+                : "text-zinc-500"
+            }
+          >
+            {hasUppercase ? "✓" : "○"} One uppercase letter
+          </p>
 
-            <AuthInput
-                label="Full Name"
-                type="text"
-                placeholder="Enter your full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={loading}
-            />
+          <p
+            className={
+              hasNumber ? "text-emerald-400" : "text-zinc-500"
+            }
+          >
+            {hasNumber ? "✓" : "○"} One number
+          </p>
 
-            <AuthInput
-                label="Email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-            />
+          <p
+            className={
+              hasSpecial ? "text-emerald-400" : "text-zinc-500"
+            }
+          >
+            {hasSpecial ? "✓" : "○"} One special character
+          </p>
+        </div>
+      </div>
 
-            <div>
-                <label className="block text-sm text-zinc-300 mb-2">
-                    Password
-                </label>
+      <div>
+        <label className="block text-sm text-zinc-300 mb-2">
+          Confirm Password
+        </label>
 
-                <PasswordInput
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                />
+        <PasswordInput
+          name="confirmPassword"
+          placeholder="Confirm your password"
+          value={confirmPassword}
+          onChange={(e) =>
+            setConfirmPassword(e.target.value)
+          }
+          autoComplete="new-password"
+          required
+          disabled={isSubmitting}
+        />
 
-                <div className="mt-3 space-y-1 text-xs">
-                    <p className={hasLength ? "text-emerald-400" : "text-zinc-500"}>
-                        {hasLength ? "✓" : "○"} At least 8 characters
-                    </p>
+        {confirmPassword.length > 0 && (
+          <p
+            className={`mt-2 text-xs ${
+              passwordsMatch
+                ? "text-emerald-400"
+                : "text-red-400"
+            }`}
+          >
+            {passwordsMatch
+              ? "✓ Passwords match"
+              : "✗ Passwords do not match"}
+          </p>
+        )}
+      </div>
 
-                    <p className={hasUppercase ? "text-emerald-400" : "text-zinc-500"}>
-                        {hasUppercase ? "✓" : "○"} One uppercase letter
-                    </p>
+      {error ? <ErrorMessage message={error} /> : null}
 
-                    <p className={hasNumber ? "text-emerald-400" : "text-zinc-500"}>
-                        {hasNumber ? "✓" : "○"} One number
-                    </p>
-                    <p className={hasSpecial ? "text-emerald-400" : "text-zinc-500"}>
-                        {hasSpecial ? "✓" : "○"} One special character
-                    </p>
-                </div>
-            </div>
-            <div>
-                <label className="block text-sm text-zinc-300 mb-2">
-                    Confirm Password
-                </label>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+      >
+        {isSubmitting ? (
+          <>
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            Creating Account...
+          </>
+        ) : (
+          "Create Account"
+        )}
+      </button>
 
-                <PasswordInput
-                    placeholder="Confirm your password"
-                    value={confirmPassword}
-                    onChange={(e) =>
-                        setConfirmPassword(e.target.value)
-                    }
-                    disabled={loading}
-                />
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-zinc-800"></div>
+        </div>
 
-                {confirmPassword.length > 0 && (
-                    <p
-                        className={`mt-2 text-xs ${passwordsMatch
-                            ? "text-emerald-400"
-                            : "text-red-400"
-                            }`}
-                    >
-                        {passwordsMatch
-                            ? "✓ Passwords match"
-                            : "✗ Passwords do not match"}
-                    </p>
-                )}
-            </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-zinc-950 px-3 text-zinc-500">
+            Or continue with
+          </span>
+        </div>
+      </div>
 
-            <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-            >
-                {loading ? (
-                    <>
-                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                        Creating Account...
-                    </>
-                ) : (
-                    "Create Account"
-                )}
-            </button>
+      <button
+        type="button"
+        className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-zinc-800 text-white py-3 rounded-lg hover:bg-zinc-800 hover:border-zinc-700 transition"
+        disabled={isSubmitting}
+      >
+        <FcGoogle size={22} />
+        Continue with Google
+      </button>
 
-            <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-zinc-800"></div>
-                </div>
-
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-zinc-950 px-3 text-zinc-500">
-                        Or continue with
-                    </span>
-                </div>
-            </div>
-
-            <button
-                type="button"
-                className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-zinc-800 text-white py-3 rounded-lg hover:bg-zinc-800 hover:border-zinc-700 transition"
-                disabled={loading}
-            >
-                <FcGoogle size={22} />
-                Continue with Google
-            </button>
-
-            <div className="text-center text-sm text-zinc-400">
-                Already have an account?
-                <Link
-                    to="/login"
-                    className="ml-2 text-violet-400 hover:text-violet-300 font-medium"
-                >
-                    Login
-                </Link>
-            </div>
-        </form >
-    );
+      <div className="text-center text-sm text-zinc-400">
+        Already have an account?
+        <Link
+          to="/login"
+          className="ml-2 text-violet-400 hover:text-violet-300 font-medium"
+        >
+          Login
+        </Link>
+      </div>
+    </form>
+  );
 }
+```

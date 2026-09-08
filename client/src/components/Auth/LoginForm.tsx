@@ -1,16 +1,23 @@
+```tsx
 import { useState, useEffect, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
 import AuthInput from "./AuthInput";
-import axios from "axios";
+import ErrorMessage from "./ErrorMessage";
+import {
+  loginUser,
+  saveSession,
+  toApiErrorMessage,
+  toUser,
+} from "../../services/api";
 
 export default function LoginForm() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // If already logged in, redirect directly to dashboard
@@ -22,37 +29,27 @@ export default function LoginForm() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
-    setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:4000/api/users/login", {
-        email,
-        password,
-      });
+      setIsSubmitting(true);
+      setError("");
 
-      if (response.data.success) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.data));
+      const response = await loginUser({ email, password });
+      saveSession(response.token, toUser(response.data));
 
-        // Check if there is a pending workspace invitation
-        const pendingInviteToken = localStorage.getItem("pendingInviteToken");
-        if (pendingInviteToken) {
-          localStorage.removeItem("pendingInviteToken");
-          navigate(`/invite/${pendingInviteToken}`);
-        } else {
-          navigate("/dashboard");
-        }
+      // Check if there is a pending workspace invitation
+      const pendingInviteToken = localStorage.getItem("pendingInviteToken");
+
+      if (pendingInviteToken) {
+        localStorage.removeItem("pendingInviteToken");
+        navigate(`/invite/${pendingInviteToken}`, { replace: true });
       } else {
-        setError(response.data.message || "Invalid credentials");
+        navigate("/dashboard", { replace: true });
       }
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Could not connect to server. Please try again."
-      );
+    } catch (submitError) {
+      setError(toApiErrorMessage(submitError));
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -67,32 +64,40 @@ export default function LoginForm() {
 
       <AuthInput
         label="Email"
+        name="email"
         type="email"
         placeholder="Enter your email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={(event) => setEmail(event.target.value)}
+        autoComplete="email"
         required
-        disabled={loading}
+        disabled={isSubmitting}
       />
+
       <div>
         <label className="block text-sm text-zinc-300 mb-2">
           Password
         </label>
 
         <PasswordInput
+          name="password"
           placeholder="Enter your password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="current-password"
+          required
+          disabled={isSubmitting}
         />
       </div>
+
+      {error ? <ErrorMessage message={error} /> : null}
 
       <div className="flex items-center justify-between text-sm">
         <label className="flex items-center gap-2 text-zinc-400 cursor-pointer">
           <input
             type="checkbox"
             className="accent-violet-600"
-            disabled={loading}
+            disabled={isSubmitting}
           />
           Remember me
         </label>
@@ -100,7 +105,7 @@ export default function LoginForm() {
         <button
           type="button"
           className="text-violet-400 hover:text-violet-300 transition"
-          disabled={loading}
+          disabled={isSubmitting}
         >
           Forgot Password?
         </button>
@@ -117,10 +122,11 @@ export default function LoginForm() {
           </span>
         </div>
       </div>
+
       <button
         type="button"
         className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-zinc-800 text-white py-3 rounded-lg hover:bg-zinc-800 hover:border-zinc-700 transition"
-        disabled={loading}
+        disabled={isSubmitting}
       >
         <FcGoogle size={22} />
         Continue with Google
@@ -128,10 +134,10 @@ export default function LoginForm() {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={isSubmitting}
         className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
       >
-        {loading ? (
+        {isSubmitting ? (
           <>
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             Logging in...
@@ -144,7 +150,7 @@ export default function LoginForm() {
       <div className="text-center text-sm text-zinc-400">
         Don't have an account?
         <Link
-          to="/signup"
+          to="/register"
           className="ml-2 text-violet-400 hover:text-violet-300 font-medium"
         >
           Sign Up
@@ -153,3 +159,4 @@ export default function LoginForm() {
     </form>
   );
 }
+```

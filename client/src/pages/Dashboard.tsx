@@ -8,7 +8,7 @@ interface DashboardProps {
   workspaces: Workspace[];
   activeWorkspaceId: string;
   onSelectWorkspace: (id: string) => void;
-  onCreateWorkspace: (name: string, description: string) => void;
+  onCreateWorkspace: (name: string, description: string) => void | Promise<void>;
   currentUser: User;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
@@ -32,13 +32,17 @@ function Dashboard({
   const [description, setDescription] = useState('');
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onCreateWorkspace(name, description);
-    setName('');
-    setDescription('');
-    setShowModal(false);
+    try {
+      await Promise.resolve(onCreateWorkspace(name, description));
+      setName('');
+      setDescription('');
+      setShowModal(false);
+    } catch {
+      // The parent container renders the request error state.
+    }
   };
 
   const [recentActivities, setRecentActivities] = useState<any[]>([]);

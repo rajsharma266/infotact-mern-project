@@ -9,7 +9,11 @@ import activityRoutes from "./routes/activityRoutes";
 const app = express();
 
 app.disable("x-powered-by");
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -28,6 +32,13 @@ app.get("/api/health", (_req, res) => {
 
 app.get("/", (_req, res) => {
   res.send("Backend Running");
+});
+
+app.use((_req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
 });
 
 export default app;

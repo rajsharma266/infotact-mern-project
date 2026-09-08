@@ -6,11 +6,11 @@ import MessageInput from './MessageInput';
 import TypingIndicator from './TypingIndicator';
 import EmptyState from './EmptyState';
 import { Search } from 'lucide-react';
-
+import { socket } from "../../services/socket";
 interface ChatAreaProps {
   activeChannel: Channel | undefined;
   messages: Message[];
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string) => void | Promise<void>;
   onAddReaction: (messageId: string, emoji: string) => void;
   typingUsers: string[];
   toggleMembersList: () => void;

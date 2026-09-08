@@ -14,10 +14,10 @@ interface WorkspaceProps {
   channels: Channel[];
   activeChannelId: string;
   onSelectChannel: (id: string) => void;
-  onCreateChannel: (name: string, desc: string, isPrivate: boolean) => void;
+  onCreateChannel: (name: string, desc: string, isPrivate: boolean) => void | Promise<void>;
   onCreateDM: (recipientId: string) => void;
   messages: Message[];
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string) => void | Promise<void>;
   onAddReaction: (messageId: string, emoji: string) => void;
   users: User[];
   currentUser: User;

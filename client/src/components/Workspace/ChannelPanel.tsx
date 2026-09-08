@@ -10,7 +10,7 @@ interface ChannelPanelProps {
   channels: Channel[];
   activeChannelId: string;
   onSelectChannel: (id: string) => void;
-  onCreateChannel: (name: string, desc: string, isPrivate: boolean) => void;
+  onCreateChannel: (name: string, desc: string, isPrivate: boolean) => void | Promise<void>;
   onCreateDM: (recipientId: string) => void;
   users: User[];
   currentUser: User;
@@ -243,11 +243,13 @@ const handleInvite = async () => {
                   <input 
                     type="text"
                     readOnly
+                    value={`${window.location.origin}/workspace/${workspaceId}`}
                     value={inviteLink}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition select-all"
                   />
                   <button
                     onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/workspace/${workspaceId}`);
                       navigator.clipboard.writeText(inviteLink);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);

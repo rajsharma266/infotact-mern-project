@@ -1,9 +1,9 @@
 export interface User {
   id: string;
   name: string;
-  avatar: string; // initials or profile background color code
-  status: 'online' | 'offline' | 'away';
-  role: 'Admin' | 'Member';
+  avatar: string;
+  status: "online" | "offline" | "away";
+  role: "Admin" | "Member";
   email?: string;
 }
 
@@ -45,5 +45,6 @@ export interface Workspace {
   description: string;
   logo: string;
   membersCount: number;
-  userIds?: string[];
+  userIds: string[];
+  ownerId: string;
 }

@@ -8,7 +8,7 @@ export interface IChannel extends Document {
   isPrivate: boolean;
   type: "channel" | "dm";
   recipientId?: mongoose.Types.ObjectId;
-  members?: mongoose.Types.ObjectId[];
+  members: mongoose.Types.ObjectId[];
 }
 
 const channelSchema = new mongoose.Schema<IChannel>(
