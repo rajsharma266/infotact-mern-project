@@ -1,17 +1,115 @@
 import type { Message, User } from "../../types";
-import { MessageSquare, Pin } from "lucide-react";
+import { MessageSquare, Pin, Trash2 } from "lucide-react";
 
 interface MessageCardProps {
   message: Message;
   onAddReaction: (messageId: string, emoji: string) => void;
   onTogglePin: (messageId: string) => void;
+  onDeleteMessage: (messageId: string) => void;
   currentUser: User;
 }
+
+const parseFormatting = (text: string): React.ReactNode[] => {
+  let firstStar = text.indexOf('*');
+  let firstUnderscore = text.indexOf('_');
+
+  let matchStar = false;
+  let nextStar = -1;
+  if (firstStar !== -1) {
+    nextStar = text.indexOf('*', firstStar + 1);
+    if (nextStar !== -1) {
+      matchStar = true;
+    }
+  }
+
+  let matchUnderscore = false;
+  let nextUnderscore = -1;
+  if (firstUnderscore !== -1) {
+    nextUnderscore = text.indexOf('_', firstUnderscore + 1);
+    if (nextUnderscore !== -1) {
+      matchUnderscore = true;
+    }
+  }
+
+  if (!matchStar && !matchUnderscore) {
+    return [text];
+  }
+
+  let useStar = false;
+  if (matchStar && matchUnderscore) {
+    useStar = firstStar < firstUnderscore;
+  } else if (matchStar) {
+    useStar = true;
+  }
+
+  if (useStar) {
+    const before = text.substring(0, firstStar);
+    const content = text.substring(firstStar + 1, nextStar);
+    const after = text.substring(nextStar + 1);
+
+    const results: React.ReactNode[] = [];
+    if (before) results.push(...parseFormatting(before));
+    results.push(
+      <strong key={`bold-${firstStar}`} className="font-bold">
+        {parseFormatting(content)}
+      </strong>
+    );
+    if (after) results.push(...parseFormatting(after));
+    return results;
+  } else {
+    const before = text.substring(0, firstUnderscore);
+    const content = text.substring(firstUnderscore + 1, nextUnderscore);
+    const after = text.substring(nextUnderscore + 1);
+
+    const results: React.ReactNode[] = [];
+    if (before) results.push(...parseFormatting(before));
+    results.push(
+      <em key={`italic-${firstUnderscore}`} className="italic">
+        {parseFormatting(content)}
+      </em>
+    );
+    if (after) results.push(...parseFormatting(after));
+    return results;
+  }
+};
+
+const parseInlineContent = (text: string): React.ReactNode[] => {
+  const singleBacktickRegex = /`([^`]+)`/g;
+  const inlineParts: React.ReactNode[] = [];
+  let lastInlineIndex = 0;
+  let inlineMatch: RegExpExecArray | null;
+
+  while ((inlineMatch = singleBacktickRegex.exec(text)) !== null) {
+    if (inlineMatch.index > lastInlineIndex) {
+      inlineParts.push(
+        ...parseFormatting(text.substring(lastInlineIndex, inlineMatch.index))
+      );
+    }
+
+    inlineParts.push(
+      <code
+        key={`code-${inlineMatch.index}`}
+        className="rounded border border-slate-800/80 bg-slate-950 px-1.5 py-0.5 font-mono text-xs text-indigo-300"
+      >
+        {inlineMatch[1]}
+      </code>
+    );
+
+    lastInlineIndex = singleBacktickRegex.lastIndex;
+  }
+
+  if (lastInlineIndex < text.length) {
+    inlineParts.push(...parseFormatting(text.substring(lastInlineIndex)));
+  }
+
+  return inlineParts;
+};
 
 function MessageCard({
   message,
   onAddReaction,
   onTogglePin,
+  onDeleteMessage,
   currentUser,
 }: MessageCardProps) {
   const quickEmojis = ["👍", "❤️", "🔥", "😂", "🎉", "🚀"];
@@ -24,7 +122,7 @@ function MessageCard({
 
     while ((match = tripleBacktickRegex.exec(content)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(content.substring(lastIndex, match.index));
+        parts.push(...parseInlineContent(content.substring(lastIndex, match.index)));
       }
 
       parts.push(
@@ -40,44 +138,7 @@ function MessageCard({
     }
 
     if (lastIndex < content.length) {
-      parts.push(content.substring(lastIndex));
-    }
-
-    if (parts.length === 1 && typeof parts[0] === "string") {
-      const singleBacktickRegex = /`([^`]+)`/g;
-      const inlineParts = [];
-      let lastInlineIndex = 0;
-      let inlineMatch: RegExpExecArray | null;
-      const inlineContent = parts[0];
-
-      while ((inlineMatch = singleBacktickRegex.exec(inlineContent)) !== null) {
-        if (inlineMatch.index > lastInlineIndex) {
-          inlineParts.push(
-            inlineContent.substring(lastInlineIndex, inlineMatch.index)
-          );
-        }
-
-        inlineParts.push(
-          <code
-            key={inlineMatch.index}
-            className="rounded border border-slate-800/80 bg-slate-950 px-1.5 py-0.5 font-mono text-xs text-indigo-300"
-          >
-            {inlineMatch[1]}
-          </code>
-        );
-
-        lastInlineIndex = singleBacktickRegex.lastIndex;
-      }
-
-      if (lastInlineIndex < inlineContent.length) {
-        inlineParts.push(inlineContent.substring(lastInlineIndex));
-      }
-
-      return (
-        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-300">
-          {inlineParts}
-        </p>
-      );
+      parts.push(...parseInlineContent(content.substring(lastIndex)));
     }
 
     return (
@@ -135,7 +196,7 @@ function MessageCard({
           </div>
         )}
 
-        {message.threadRepliesCount && message.threadRepliesCount > 0 && (
+        {(message.threadRepliesCount ?? 0) > 0 && (
           <button className="mt-3 flex w-fit cursor-pointer items-center gap-1.5 rounded p-1 text-xs font-semibold text-indigo-400 hover:bg-indigo-500/5 hover:text-indigo-300 select-none">
             <MessageSquare size={12} />
             <span>{message.threadRepliesCount} replies</span>
@@ -171,6 +232,16 @@ function MessageCard({
         >
           <Pin size={13} className={message.isPinned ? "" : "rotate-45"} />
         </button>
+
+        {message.senderId === currentUser.id && (
+          <button
+            onClick={() => onDeleteMessage(message.id)}
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-rose-500 transition hover:bg-slate-850 hover:text-rose-400 active:scale-90"
+            title="Delete Message"
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
 
         <button
           className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-indigo-400"

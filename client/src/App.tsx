@@ -1,7 +1,9 @@
+```tsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import WorkspaceApp from "./pages/WorkspaceApp";
+import InvitePage from "./pages/InvitePage";
 import { hasToken } from "./services/api";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -26,19 +28,25 @@ function App() {
           />
         }
       />
+
       <Route
         path="/login"
         element={
           isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
         }
       />
+
       <Route
         path="/register"
         element={
           isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />
         }
       />
+
       <Route path="/signup" element={<Navigate to="/register" replace />} />
+
+      <Route path="/invite/:token" element={<InvitePage />} />
+
       <Route
         path="/dashboard"
         element={
@@ -47,6 +55,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/workspace/:id"
         element={
@@ -55,6 +64,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/channel/:id"
         element={
@@ -63,6 +73,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="*"
         element={
@@ -77,3 +88,4 @@ function App() {
 }
 
 export default App;
+```

@@ -6,6 +6,8 @@ export interface IChannel extends Document {
   workspaceId: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
   isPrivate: boolean;
+  type: "channel" | "dm";
+  recipientId?: mongoose.Types.ObjectId;
   members: mongoose.Types.ObjectId[];
 }
 
@@ -34,6 +36,16 @@ const channelSchema = new mongoose.Schema<IChannel>(
     isPrivate: {
       type: Boolean,
       default: false,
+    },
+    type: {
+      type: String,
+      enum: ["channel", "dm"],
+      default: "channel",
+    },
+    recipientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
     members: [
       {

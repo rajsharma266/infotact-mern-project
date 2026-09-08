@@ -25,6 +25,7 @@ interface ChatAreaProps {
   onToggleTheme?: () => void;
   onLeaveChannel?: (channelId: string) => void;
   onTogglePin: (messageId: string) => void;
+  onDeleteMessage: (messageId: string) => void;
 }
 
 function ChatArea({
@@ -45,6 +46,7 @@ function ChatArea({
   onToggleTheme,
   onLeaveChannel,
   onTogglePin,
+  onDeleteMessage,
 }: ChatAreaProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -106,6 +108,7 @@ function ChatArea({
               messages={filteredMessages} 
               onAddReaction={onAddReaction} 
               onTogglePin={onTogglePin}
+              onDeleteMessage={onDeleteMessage}
               currentUser={currentUser} 
             />
           )}

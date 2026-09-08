@@ -5,6 +5,7 @@ import http from "http";
 import { Server } from "socket.io";
 import app from "./app";
 import dbConnect from "./config/db";
+import { initSocket } from "./socket/socketHandler";
 
 const PORT = Number(process.env.PORT) || 4000;
 
@@ -12,6 +13,10 @@ const startServer = async () => {
   await dbConnect();
 
   const server = http.createServer(app);
+  
+  // Initialize Socket.IO and set it on the express app instance
+  const io = initSocket(server);
+  app.set("io", io);
 
   const io = new Server(server, {
     cors: {

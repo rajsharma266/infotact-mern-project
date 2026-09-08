@@ -6,6 +6,7 @@ interface MessageListProps {
   messages: Message[];
   onAddReaction: (messageId: string, emoji: string) => void;
   onTogglePin: (messageId: string) => void;
+  onDeleteMessage: (messageId: string) => void;
   currentUser: User;
 }
 
@@ -13,6 +14,7 @@ function MessageList({
   messages,
   onAddReaction,
   onTogglePin,
+  onDeleteMessage,
   currentUser,
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -51,6 +53,7 @@ function MessageList({
             message={message}
             onAddReaction={onAddReaction}
             onTogglePin={onTogglePin}
+            onDeleteMessage={onDeleteMessage}
             currentUser={currentUser}
           />
         ))}

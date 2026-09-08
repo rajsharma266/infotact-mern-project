@@ -32,10 +32,11 @@ export interface Channel {
   name: string;
   description: string;
   isPrivate: boolean;
-  type: "channel" | "dm";
-  recipientId?: string;
-  userIds: string[];
-  createdBy?: string;
+  type: 'channel' | 'dm';
+  recipientId?: string; // If it's a DM, who is the recipient
+  userIds?: string[];
+  createdAt?: string;
+  createdBy?: any;
 }
 
 export interface Workspace {

@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+```tsx
+import { useState, useEffect, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordInput from "./PasswordInput";
 import { FcGoogle } from "react-icons/fc";
@@ -18,6 +19,14 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    // If already logged in, redirect directly to dashboard
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -27,7 +36,16 @@ export default function LoginForm() {
 
       const response = await loginUser({ email, password });
       saveSession(response.token, toUser(response.data));
-      navigate("/dashboard", { replace: true });
+
+      // Check if there is a pending workspace invitation
+      const pendingInviteToken = localStorage.getItem("pendingInviteToken");
+
+      if (pendingInviteToken) {
+        localStorage.removeItem("pendingInviteToken");
+        navigate(`/invite/${pendingInviteToken}`, { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (submitError) {
       setError(toApiErrorMessage(submitError));
     } finally {
@@ -37,6 +55,13 @@ export default function LoginForm() {
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      {error && (
+        <div className="p-3 bg-red-950/50 border border-red-500/50 text-red-200 text-sm rounded-lg flex items-center gap-2">
+          <span className="text-red-400 font-semibold">⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
+
       <AuthInput
         label="Email"
         name="email"
@@ -48,8 +73,9 @@ export default function LoginForm() {
         required
         disabled={isSubmitting}
       />
+
       <div>
-        <label className="block text-sm text-slate-300 mb-2">
+        <label className="block text-sm text-zinc-300 mb-2">
           Password
         </label>
 
@@ -67,10 +93,11 @@ export default function LoginForm() {
       {error ? <ErrorMessage message={error} /> : null}
 
       <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
+        <label className="flex items-center gap-2 text-zinc-400 cursor-pointer">
           <input
             type="checkbox"
             className="accent-violet-600"
+            disabled={isSubmitting}
           />
           Remember me
         </label>
@@ -78,6 +105,7 @@ export default function LoginForm() {
         <button
           type="button"
           className="text-violet-400 hover:text-violet-300 transition"
+          disabled={isSubmitting}
         >
           Forgot Password?
         </button>
@@ -85,18 +113,20 @@ export default function LoginForm() {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-700"></div>
+          <div className="w-full border-t border-zinc-800"></div>
         </div>
 
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-slate-900 px-3 text-slate-500">
+          <span className="bg-zinc-950 px-3 text-zinc-500">
             Or continue with
           </span>
         </div>
       </div>
+
       <button
         type="button"
-        className="w-full flex items-center justify-center gap-3 bg-slate-800 border border-slate-700 text-white py-3 rounded-lg hover:bg-slate-700 transition"
+        className="w-full flex items-center justify-center gap-3 bg-zinc-900 border border-zinc-800 text-white py-3 rounded-lg hover:bg-zinc-800 hover:border-zinc-700 transition"
+        disabled={isSubmitting}
       >
         <FcGoogle size={22} />
         Continue with Google
@@ -105,12 +135,19 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition"
+        className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
       >
-        {isSubmitting ? "Logging in..." : "Login"}
+        {isSubmitting ? (
+          <>
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            Logging in...
+          </>
+        ) : (
+          "Login"
+        )}
       </button>
 
-      <div className="text-center text-sm text-slate-400">
+      <div className="text-center text-sm text-zinc-400">
         Don't have an account?
         <Link
           to="/register"
@@ -122,3 +159,4 @@ export default function LoginForm() {
     </form>
   );
 }
+```
